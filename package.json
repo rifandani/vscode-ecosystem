@@ -1,0 +1,307 @@
+{
+  "publisher": "rifandani",
+  "name": "vscode-ecosystem",
+  "displayName": "Vscode Ecosystem",
+  "version": "0.0.1",
+  "packageManager": "pnpm@8.10.5",
+  "description": "My personal Vscode Ecosystem mainly for frontend development",
+  "author": "Tri Rizeki Rifandani <tri.rifandani@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/rifandani/vscode-ecosystem#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rifandani/vscode-ecosystem"
+  },
+  "bugs": {
+    "url": "https://github.com/rifandani/vscode-ecosystem/issues"
+  },
+  "categories": [
+    "Snippets",
+    "Other"
+  ],
+  "main": "./dist/index.js",
+  "icon": "res/panda.png",
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "vscode": "^1.83.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "contributes": {
+    "configuration": {
+      "title": "Vscode Ecosystem - Highlight",
+      "properties": {
+        "veco.highlight.isEnable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable the highlighting"
+        },
+        "veco.highlight.toggleURI": {
+          "type": "boolean",
+          "default": false,
+          "description": "If the file path within the output channel is not clickable, set this to true to toggle the path patten between `<path>#<line>` and `<path>:<line>:<column>`"
+        },
+        "veco.highlight.isCaseSensitive": {
+          "type": "boolean",
+          "default": true,
+          "description": "Specify whether the keywords are case sensitive or not"
+        },
+        "veco.highlight.enableDiagnostics": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable creating entries in the problems view."
+        },
+        "veco.highlight.maxFilesForSearch": {
+          "type": "number",
+          "default": 5120,
+          "description": "Max files for searching"
+        },
+        "veco.highlight.defaultStyle": {
+          "type": "object",
+          "properties": {
+            "backgroundColor": {
+              "type": "string",
+              "description": "The background color for the highlight."
+            },
+            "border": {
+              "type": "string",
+              "description": "The border style for the highlight, as a CSS string."
+            },
+            "color": {
+              "type": "string",
+              "markdownDescription": "The text color."
+            },
+            "cursor": {
+              "type": "string",
+              "description": "The style for the cursor shown over the highlight, as a CSS property."
+            },
+            "isWholeLine": {
+              "type": "boolean",
+              "default": false,
+              "description": "If true, then the whole line is highlighted, not just the matching text."
+            },
+            "overviewRulerColor": {
+              "type": "string",
+              "description": "The color of the ruler mark on the scroll bar."
+            }
+          },
+          "default": {
+            "color": "#2196f3",
+            "backgroundColor": "#ffeb3b"
+          },
+          "$comment": "The selection of properties for autocompletion are the same as for `veco.highlight.keywords`",
+          "description": "Default style for all customized keywords. See all available properties in the VSCode doc on `DecorationRenderOptions` section."
+        },
+        "veco.highlight.keywords": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "text"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "Custom text to be highlighted."
+                  },
+                  "diagnosticSeverity": {
+                    "type": "string",
+                    "default": "none",
+                    "enum": [
+                      "error",
+                      "warning",
+                      "information",
+                      "hint",
+                      "none"
+                    ],
+                    "description": "If set to 'none', it will do nothing. Otherwise it will set the diagnostic severity in the problems view."
+                  },
+                  "regex": {
+                    "type": "object",
+                    "properties": {
+                      "pattern": {
+                        "type": "string",
+                        "description": "The RegEx pattern to use for matching instead of the text value. REMEMBER to escape any backslashes in your regexp (using \\\\ instead of single backslash)."
+                      }
+                    }
+                  },
+                  "backgroundColor": {
+                    "type": "string",
+                    "description": "The text background color."
+                  },
+                  "border": {
+                    "type": "string",
+                    "description": "The border style for the highlight, as a CSS string."
+                  },
+                  "color": {
+                    "type": "string",
+                    "description": "The text color. "
+                  },
+                  "cursor": {
+                    "type": "string",
+                    "description": "The style for the cursor shown over the highlight, as a CSS property."
+                  },
+                  "isWholeLine": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "If true, then the whole line is highlighted, not just the matching text."
+                  },
+                  "overviewRulerColor": {
+                    "type": "string",
+                    "description": "The color of the ruler mark on the scroll bar."
+                  }
+                },
+                "$comment": "text and regex are self defined. The selection of the other properties for autocompletion are the same as for veco.highlight.keywords."
+              }
+            ]
+          },
+          "default": [
+            {
+              "text": "NOTE:",
+              "diagnosticSeverity": "information",
+              "color": "#fff",
+              "backgroundColor": "rgba(27,154,170,1)",
+              "overviewRulerColor": "rgba(27,154,170,0.8)"
+            },
+            {
+              "text": "TODO:",
+              "diagnosticSeverity": "warning",
+              "color": "#fff",
+              "backgroundColor": "rgba(255,197,61,1)",
+              "overviewRulerColor": "rgba(255,197,61,0.8)"
+            },
+            {
+              "text": "FIXME:",
+              "diagnosticSeverity": "error",
+              "color": "#fff",
+              "backgroundColor": "rgba(239,71,110,1)",
+              "overviewRulerColor": "rgba(239,71,110,0.8)"
+            }
+          ],
+          "description": "An array of keywords, and their CSS to customise how they look. See all available properties in the VSCode doc on DecorationRenderOptions section."
+        },
+        "veco.highlight.keywordsPattern": {
+          "type": "string",
+          "default": "",
+          "description": "Specify keywords via RegExp instead of `veco.highlight.keywords` one by one. NOTE that if this present, `veco.highlight.keywords` will be ignored. REMEMBER to escape any backslashes in your regexp (using \\\\ instead of single backslash)."
+        },
+        "veco.highlight.include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/*.js",
+            "**/*.jsx",
+            "**/*.ts",
+            "**/*.tsx",
+            "**/*.vue",
+            "**/*.svelte",
+            "**/*.html",
+            "**/*.css",
+            "**/*.scss",
+            "**/*.md"
+          ],
+          "description": "Glob patterns that defines the files to search for. Only include files you need, DO NOT USE `{**/*.*}` for both performance and to avoid binary files."
+        },
+        "veco.highlight.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/node_modules/**",
+            "**/bower_components/**",
+            "**/dist/**",
+            "**/build/**",
+            "**/html/**",
+            "**/coverage/**",
+            "**/out/**",
+            "**/.vscode/**",
+            "**/.vscode-test/**",
+            "**/.github/**",
+            "**/_output/**",
+            "**/*.min.*",
+            "**/*.map",
+            "**/.next/**"
+          ],
+          "description": "Glob pattern that defines files and folders to exclude while listing annotations."
+        }
+      }
+    },
+    "snippets": [
+      {
+        "language": "javascript",
+        "path": "./src/snippets/react.json"
+      },
+      {
+        "language": "javascriptreact",
+        "path": "./src/snippets/react.json"
+      },
+      {
+        "language": "typescript",
+        "path": "./src/snippets/react.json"
+      },
+      {
+        "language": "typescriptreact",
+        "path": "./src/snippets/react.json"
+      }
+    ],
+    "commands": [
+      {
+        "title": "Toggle highlight",
+        "category": "Veco - Highlight",
+        "command": "veco.highlight.toggleIsEnable"
+      },
+      {
+        "title": "List highlighted annotations",
+        "category": "Veco - Highlight",
+        "command": "veco.highlight.listAnnotations"
+      },
+      {
+        "title": "Show output channel",
+        "category": "Veco - Highlight",
+        "command": "veco.highlight.showOutputChannel"
+      }
+    ]
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest",
+    "dev": "nr build --watch",
+    "build": "tsup src/index.ts --external vscode",
+    "pack": "vsce package --no-dependencies",
+    "publish": "vsce publish --no-dependencies",
+    "vscode:prepublish": "nr build",
+    "release": "bumpp && nr publish"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^1.1.1",
+    "@antfu/ni": "^0.21.9",
+    "@rifandani/nxact-yutiriti": "^1.2.2",
+    "@types/node": "^20.9.0",
+    "@types/vscode": "^1.84.1",
+    "@vscode/vsce": "^2.22.0",
+    "bumpp": "^9.2.0",
+    "eslint": "^8.53.0",
+    "esno": "^4.0.0",
+    "minimatch": "^9.0.3",
+    "pnpm": "^8.10.5",
+    "prettier": "^3.1.0",
+    "rimraf": "^5.0.5",
+    "tsup": "^7.2.0",
+    "type-fest": "^4.8.2",
+    "typescript": "^5.2.2",
+    "vite": "^4.5.0",
+    "vitest": "^0.34.6"
+  }
+}

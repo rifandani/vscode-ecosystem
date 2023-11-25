@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "runtimeExecutable": "${execPath}",
+      // "runtimeExecutable": "/Applications/Visual Studio Code - Insiders.app/Contents/MacOS/Electron",
+      "args": [
+        "--disable-extensions", // disabling other extensions while debugging
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "preLaunchTask": "npm: dev"
+    }
+  ]
+}
