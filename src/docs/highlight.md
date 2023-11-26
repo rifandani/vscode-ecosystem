@@ -2,6 +2,12 @@
 
 Forked from [vscode-todo-highlight by jgclark](https://github.dev/jgclark/vscode-todo-highlight). All credits goes to original authors.
 
+The big differences are:
+
+1. Full refactor to `typescript`, and `tsup`
+2. Less global variables, global variables are more organized which leads to much more readable and maintainable code
+3. Add one more default annotation -> `NOTE:`
+
 ## Commands
 This extension contributes the following commands to the Command palette.
 
@@ -11,7 +17,7 @@ This extension contributes the following commands to the Command palette.
 ![](https://github.com/wayou/vscode-todo-highlight/raw/master/assets/list-annotations.gif)
 
 ## Top-level Configuration
-`TODO:` and `FIXME:` are built-in keywords. To add or change keywords and other settings, <kbd>command</kbd> + <kbd>,</kbd> (or on Windows / Linux: File -> Preferences -> User Settings) to open the VSCode file `settings.json`.
+`NOTE:`, `TODO:` and `FIXME:` are built-in keywords. To add or change keywords and other settings, <kbd>command</kbd> + <kbd>,</kbd> (or on Windows / Linux: File -> Preferences -> User Settings) to open the VSCode file `settings.json`.
 
 |                                 | type    | default                                                                                                                                                                                                      | description                                                                                                                                                                                                                                                                                                                                                                                      |
 | ------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
