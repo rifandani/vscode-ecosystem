@@ -279,10 +279,6 @@ export function showOutputChannel(annotationList: HighlightState['annotationList
      * due to an issue of vscode (https://github.com/Microsoft/vscode/issues/586),
      * in order to make file path clickable within the output channel,
      * the file path differs from platform
-     *
-     * @example
-     * #1	file:///Users/rizeki.rifandani/Desktop/dev/react/react-app/src/modules/todo/pages/Todos/Todos.page.test.tsx:22:6
-     * FIXME: TypeError: mutate is not a function
      */
     const patternA = `#${idx + 1}\t${annotation.uri}#${annotation.lineNum + 1}`
     const patternB = `#${idx + 1}\t${annotation.uri}:${annotation.lineNum + 1}:${annotation.startCol + 1}`

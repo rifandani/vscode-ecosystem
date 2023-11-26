@@ -276,6 +276,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "vitest",
     "dev": "nr build --watch",
     "build": "tsup src/index.ts --external vscode",
