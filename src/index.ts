@@ -42,7 +42,6 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.workspace.onDidCloseTextDocument((event) => {
-      // NOTE: original version -> event.document
       highlightDiagnostics.set(event.uri, [])
     }),
 

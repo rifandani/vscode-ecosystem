@@ -124,7 +124,7 @@ export const highlightDefaultConfig = {
   /**
    * Glob patterns that defines the files to search for.
    *
-   * NOTE: Note that explicitly specifying include patterns will override the default settings,
+   * NOTE: explicitly specifying include patterns will override the default settings,
    * so if you want to add new patterns, and also use the defaults,
    * you will need to include the default patterns as well.
    */

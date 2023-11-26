@@ -21,7 +21,7 @@ const statusBarItemTooltip = 'List annotations'
 /**
  * create a status bar item with left alignment
  *
- * NOTE: triggers `highlightCommand.showOutputChannel`
+ * this will triggers `highlightCommand.showOutputChannel`
  */
 function createStatusBarItem() {
   const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)
@@ -80,7 +80,6 @@ function getAssembledData() {
       keyword = Object.assign({}, defaultKeywords[text], keyword)
 
     if (keyword.regex)
-      // NOTE: original code -> regex.pattern || text
       regex.push(keyword.regex.pattern || text)
 
     // NOTE: original code -> constants.severityMap[keyword.diagnosticSeverity]
@@ -176,7 +175,6 @@ function updateDecorations() {
   const text = vscode.window.activeTextEditor.document.getText()
   let match = (state.highlight.pattern as RegExp).exec(text)
 
-  // NOTE: original code -> match = (state.highlight.pattern as RegExp).exec(text)
   while (match) {
     const startPos = vscode.window.activeTextEditor.document.positionAt(match.index)
     const endPos = vscode.window.activeTextEditor.document.positionAt(match.index + match[0].length)
@@ -476,10 +474,6 @@ export function init() {
     state.highlight.assembledData = getAssembledData()
 
     Object.keys(state.highlight.assembledData).forEach((_key) => {
-      // NOTE: we already done this in `getAssembledData()`
-      // if (!isCaseSensitive)
-      //   _key = _key.toUpperCase()
-
       const mergedStyle = Object.assign({}, {
         overviewRulerLane: vscode.OverviewRulerLane.Right,
       }, state.highlight.assembledData![_key])
