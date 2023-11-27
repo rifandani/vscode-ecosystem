@@ -1,9 +1,9 @@
 import vscode from 'vscode'
-import type { HighlightDefaultConfig } from '../constants/config'
+import type { FileNestingDefaultConfig, HighlightDefaultConfig } from '../constants/config'
 import { configs, highlightDefaultConfig } from '../constants/config'
 
 /**
- * get USER defined "veco.highlight" extension config (with default values)
+ * get user defined "veco.highlight" extension config (with default values)
  */
 export function getHighlightConfig() {
   const config = vscode.workspace.getConfiguration(configs.highlight.root)
@@ -18,5 +18,34 @@ export function getHighlightConfig() {
   const include = config.get(configs.highlight.include, highlightDefaultConfig.include)
   const exclude = config.get(configs.highlight.exclude, highlightDefaultConfig.exclude)
 
-  return { config, isEnable, enableDiagnostics, isCaseSensitive, keywords, keywordsPattern, defaultStyle, include, exclude, maxFilesForSearch, toggleURI }
+  return {
+    config,
+    isEnable,
+    enableDiagnostics,
+    isCaseSensitive,
+    keywords,
+    keywordsPattern,
+    defaultStyle,
+    include,
+    exclude,
+    maxFilesForSearch,
+    toggleURI,
+  }
+}
+
+/**
+ * get user defined "explorer.fileNesting" extension config
+ */
+export function getFileNestingConfig() {
+  const config = vscode.workspace.getConfiguration(configs.fileNesting.root)
+  const enabled = config.get<FileNestingDefaultConfig['enabled']>(configs.fileNesting.enabled)
+  const expand = config.get<FileNestingDefaultConfig['expand']>(configs.fileNesting.expand)
+  const patterns = config.get<FileNestingDefaultConfig['patterns']>(configs.fileNesting.patterns)
+
+  return {
+    config,
+    enabled,
+    expand,
+    patterns,
+  }
 }

@@ -1,16 +1,19 @@
 import vscode from 'vscode'
 import { commands as highlightCommand, listAnnotationsCommand, showOutputChannelCommand, toggleIsEnableCommand } from './commands/highlight'
+import { applyCommand, commands as fileNestingCommand, removeCommand } from './commands/file-nesting'
 import { init, triggerUpdateDecorations } from './utils/highlight'
 import { highlightDiagnostics } from './constants/globals'
 import { getHighlightConfig } from './utils/config'
 
 export async function activate(context: vscode.ExtensionContext) {
+  // init/set all necessary things for "highlight"
   init()
 
+  // update decorations for the first time for "highlight"
   if (vscode.window.activeTextEditor)
     triggerUpdateDecorations()
 
-  const disposables: vscode.Disposable[] = [
+  const highlightDisposables = [
     highlightDiagnostics,
 
     vscode.commands.registerCommand(
@@ -56,6 +59,22 @@ export async function activate(context: vscode.ExtensionContext) {
       init()
       triggerUpdateDecorations()
     }),
+  ]
+
+  const fileNestingDisposables = [
+    vscode.commands.registerCommand(
+      fileNestingCommand.apply,
+      applyCommand,
+    ),
+    vscode.commands.registerCommand(
+      fileNestingCommand.remove,
+      removeCommand,
+    ),
+  ]
+
+  const disposables: vscode.Disposable[] = [
+    ...highlightDisposables,
+    ...fileNestingDisposables,
   ]
 
   context.subscriptions.push(...disposables)

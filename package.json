@@ -270,6 +270,16 @@
         "title": "Show output channel",
         "category": "Veco - Highlight",
         "command": "veco.highlight.showOutputChannel"
+      },
+      {
+        "title": "Apply File Nesting Config",
+        "category": "Veco - File Nesting",
+        "command": "veco.fileNesting.apply"
+      },
+      {
+        "title": "Remove File Nesting Config",
+        "category": "Veco - File Nesting",
+        "command": "veco.fileNesting.remove"
       }
     ]
   },
