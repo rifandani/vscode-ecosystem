@@ -5,18 +5,20 @@ Forked from [vscode-todo-highlight by jgclark](https://github.dev/jgclark/vscode
 The big differences are:
 
 1. Full refactor to `typescript`, and `tsup`
-2. Less global variables, global variables are more organized which leads to much more readable and maintainable code
-3. Add one more default annotation -> `NOTE:`
+2. Less global variables
+3. Global variables are more organized which leads to much more readable and maintainable code
+4. Add one more default annotation -> `NOTE:`
 
 ## Commands
+
 This extension contributes the following commands to the Command palette.
 
-- `Toggle highlight` : turn on/off the highlight
-![](https://github.com/wayou/vscode-todo-highlight/raw/master/assets/toggle-highlight.gif)
-- `List highlighted annotations` : list annotations to the Output tab (when you have a folder and/or workspace open; when you are working on individual files in one or more editors, the command returns 0 results).
-![](https://github.com/wayou/vscode-todo-highlight/raw/master/assets/list-annotations.gif)
+- `Toggle highlight`: turn on/off the highlight
+- `List highlighted annotations`: list annotations to the Output tab (when you have a folder and/or workspace open; when you are working on individual files in one or more editors, the command returns 0 results)
+- `Show output channel`: open the output channel as a document
 
 ## Top-level Configuration
+
 `NOTE:`, `TODO:` and `FIXME:` are built-in keywords. To add or change keywords and other settings, <kbd>command</kbd> + <kbd>,</kbd> (or on Windows / Linux: File -> Preferences -> User Settings) to open the VSCode file `settings.json`.
 
 |                                 | type    | default                                                                                                                                                                                                      | description                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -33,6 +35,7 @@ This extension contributes the following commands to the Command palette.
 | todohighlight.toggleURI         | boolean | false                                                                                                                                                                                                        | If the file path within the output channel is not clickable, set this to true to toggle the path pattern between `<path>#<line>` and `<path>:<line>:<column>`.                                                                                                                                                                                                                                       |
 
 ## Configuration for each Keyword
+
 You can override the look by customizing the detailed settings for each **Keyword** in `"todohighlight.keywords"` (and similarly the defaults in `"todohighlight.defaultStyle"`). The available keys and values are:
 - "text": string: without a defined regex pattern this is the string that will be matched
 - "regex": { pattern: "..." } a regex pattern for what will be matched
