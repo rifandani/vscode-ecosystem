@@ -2,6 +2,7 @@ import vscode from 'vscode'
 import type { KeywordObject } from './config'
 import { configs } from './config'
 
+// #region INTERFACES
 export interface HighlightAnnotation {
   startCol: number
   endCol: number
@@ -25,7 +26,13 @@ export interface HighlightState {
   outputChannel: null | vscode.OutputChannel
 }
 
-export const state = {
+export interface ColorizeState {
+  timeout: null | NodeJS.Timeout
+  decorationTypes: vscode.TextEditorDecorationType[]
+}
+// #endregion
+
+export const defaultState = {
   highlight: {
     timeout: null,
     styleForRegExp: null,
@@ -88,6 +95,15 @@ export const state = {
     statusBarItem: null,
     outputChannel: null,
   } as HighlightState,
+  colorize: {
+    timeout: null,
+    decorationTypes: [],
+  } as ColorizeState,
 }
 
-export const highlightDiagnostics = vscode.languages.createDiagnosticCollection(configs.highlight.root)
+// copied, so that when we mutate the `state` object, it doesn't also mutate `defaultState` object
+export const state = { ...defaultState }
+
+export const diagnostics = {
+  highlight: vscode.languages.createDiagnosticCollection(configs.highlight.root),
+}

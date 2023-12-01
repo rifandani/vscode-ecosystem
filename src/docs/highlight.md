@@ -1,10 +1,10 @@
 # Intro
 
-Forked from [vscode-todo-highlight by jgclark](https://github.dev/jgclark/vscode-todo-highlight). All credits goes to original authors.
+Forked from [vscode-todo-highlight by jgclark](https://github.com/jgclark/vscode-todo-highlight). All credits goes to original authors.
 
 The big differences are:
 
-1. Full refactor to `typescript`, and `tsup`
+1. Full refactor to `typescript`
 2. Less global variables
 3. Global variables are more organized which leads to much more readable and maintainable code
 4. Add one more default annotation -> `NOTE:`
@@ -21,36 +21,143 @@ This extension contributes the following commands to the Command palette.
 
 `NOTE:`, `TODO:` and `FIXME:` are built-in keywords. To add or change keywords and other settings, <kbd>command</kbd> + <kbd>,</kbd> (or on Windows / Linux: File -> Preferences -> User Settings) to open the VSCode file `settings.json`.
 
-|                                 | type    | default                                                                                                                                                                                                      | description                                                                                                                                                                                                                                                                                                                                                                                      |
-| ------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| todohighlight.enableDiagnostics | boolean | true    | Enable creating diagnostic entries for open files in the problems view. Default is false.                                                                                                                                                                             |
-| todohighlight.isEnable          | boolean | true                                                                                                                                                                                                         | Toggle the highlight, default is true.                                                                                                                                                                                                                                                                                                                                                           |
-| todohighlight.isCaseSensitive   | boolean | true                                                                                                                                                                                                         | Whether the keywords are case sensitive or not.                                                                                                                                                                                                                                                                                                                                                  |
-| todohighlight.keywords          | array   | N/A                                                                                                                                                                                                          | An array of keywords that will be highlighted. You can also specify the style for each keyword here, and a more advanced regex to detect the item to highlight. See [section and examples below](#configuration-for-each-keyword) for details                                                                                                                                                                                                                                           |
-| todohighlight.keywordsPattern   | string  | N/A                                                                                                                                                                                                          | Specify keywords via regex instead of `todohighlight.keywords` one by one. NB: if this is present, `todohighlight.keywords` will be ignored. Remember to escape the backslash if there's any in your regex (using `\\` (double backslash) instead of single backslash).                                                                                                                            |
-| todohighlight.defaultStyle      | object  | N/A                                                                                                                                                                                                          | Specify the default style for custom keywords, if not specified, build in default style will be applied. [See all available properties on VSCode doc DecorationRenderOptions section](https://code.visualstudio.com/docs/extensionAPI/vscode-api)                                                                                                                                                |
-| todohighlight.include           | array   | [<br>`"**/*.js"`,<br>`"**/*.jsx"`,<br>`"**/*.ts"`,<br>`"**/*.tsx",`<br>`"**/*.html"`,<br>`"**/*.php"`,<br>`"**/*.css",`<br>`"**/*.scss"`<br>]                                                                | Glob patterns that defines the files to search for. **Please add other file types you need,** but for performance reasons and to avoid binary files do **not** use `{**/*.*}`. <br> Note that explicitly specifying `include` patterns will override the default settings, so if you want to add new patterns, and also use the defaults, you will need to include the default patterns as well. |
-| todohighlight.exclude           | array   | [<br>`"**/node_modules/**"`,<br>`"**/dist/**",`<br>`"**/bower_components/**"`,<br>`"**/build/**",`<br>`"**/.vscode/**"`,<br>`"**/.github/**"`,<br>`"**/_output/**"`,<br>`"**/*.min.*"`,<br>`"**/*.map"`<br>] | Glob pattern that defines files and folders to exclude while listing annotations. <br> Note that explicitly specifying `exclude` patterns will override the default settings, so if you want to add new patterns, and also use the defaults, you will need to include the default patterns as well.                                                                                              |
-| todohighlight.maxFilesForSearch | number  | 5120                                                                                                                                                                                                         | Max files for searching, mostly you don't need to configure this.                                                                                                                                                                                                                                                                                                                                |
-| todohighlight.toggleURI         | boolean | false                                                                                                                                                                                                        | If the file path within the output channel is not clickable, set this to true to toggle the path pattern between `<path>#<line>` and `<path>:<line>:<column>`.                                                                                                                                                                                                                                       |
+```ts
+interface HighlightDefaultConfig {
+  isEnable: boolean
+  toggleURI: boolean
+  isCaseSensitive: boolean
+  enableDiagnostics: boolean
+  maxFilesForSearch: number
+  defaultStyle: Partial<vscode.DecorationRenderOptions>
+  keywords: Array<Keyword>
+  keywordsPattern: string | RegExp
+  include: Array<string>
+  exclude: Array<string>
+}
+
+const highlightDefaultConfig = {
+  /**
+   * Enable or disable the highlighting
+   */
+  isEnable: true,
+  /**
+   * If the file path within the output channel is not clickable,
+   * set this to true to toggle the path patten between `<path>#<line>` and `<path>:<line>:<column>`
+   */
+  toggleURI: false,
+  /**
+   * Specify whether the keywords are case sensitive or not
+   */
+  isCaseSensitive: true,
+  /**
+   * Enable creating diagnostic entries for open files in the problems view.
+   */
+  enableDiagnostics: false,
+  /**
+   * Max files for searching, mostly you don't need to configure this
+   */
+  maxFilesForSearch: 5120,
+  /**
+   * An array of keywords that will be highlighted.
+   * You can also specify the style for each keyword here,
+   * and a more advanced regex to detect the item to highlight.
+   */
+  keywords: [
+    {
+      text: 'NOTE:',
+      diagnosticSeverity: 'information',
+      color: '#fff',
+      backgroundColor: 'rgba(27,154,170,1)',
+      overviewRulerColor: 'rgba(27,154,170,0.8)',
+    },
+    {
+      text: 'TODO:',
+      diagnosticSeverity: 'warning',
+      color: '#fff',
+      backgroundColor: 'rgba(255,197,61,1)',
+      overviewRulerColor: 'rgba(255,197,61,0.8)',
+    },
+    {
+      text: 'FIXME:',
+      diagnosticSeverity: 'error',
+      color: '#fff',
+      backgroundColor: 'rgba(239,71,110,1)',
+      overviewRulerColor: 'rgba(239,71,110,0.8)',
+    },
+  ],
+  /**
+   * Specify keywords via regex instead of `veco.highlight.keywords` one by one.
+   *
+   * NOTE: if this is present, `veco.highlight.keywords` will be ignored.
+   * Remember to escape the backslash if there's any in your regex
+   * (using \\ (double backslash) instead of single backslash).
+   */
+  keywordsPattern: '',
+  /**
+   * Specify the default style for custom keywords, if not specified, build in default style will be applied
+   *
+   * @link [DecorationRenderOptions](https://code.visualstudio.com/api/references/vscode-api#DecorationRenderOptions)
+   */
+  defaultStyle: {
+    color: '#2196f3',
+    backgroundColor: '#ffeb3b',
+  },
+  /**
+   * Glob patterns that defines the files to search for.
+   *
+   * NOTE: explicitly specifying include patterns will override the default settings,
+   * so if you want to add new patterns, and also use the defaults,
+   * you will need to include the default patterns as well.
+   */
+  include: [
+    '**/*.js',
+    '**/*.jsx',
+    '**/*.ts',
+    '**/*.tsx',
+    '**/*.html',
+    '**/*.php',
+    '**/*.css',
+    '**/*.scss',
+  ],
+  /**
+   * Glob pattern that defines files and folders to exclude while listing annotations.
+   *
+   * NOTE: explicitly specifying exclude patterns will override the default settings,
+   * so if you want to add new patterns, and also use the defaults,
+   * you will need to include the default patterns as well.
+   */
+  exclude: [
+    '**/node_modules/**',
+    '**/dist/**',
+    '**/bower_components/**',
+    '**/build/**',
+    '**/.vscode/**',
+    '**/.github/**',
+    '**/_output/**',
+    '**/*.min.*',
+    '**/*.map',
+  ],
+} satisfies HighlightDefaultConfig
+```
 
 ## Configuration for each Keyword
 
-You can override the look by customizing the detailed settings for each **Keyword** in `"todohighlight.keywords"` (and similarly the defaults in `"todohighlight.defaultStyle"`). The available keys and values are:
+You can override the look by customizing the detailed settings for each **Keyword** in `"veco.highlight.keywords"` (and similarly the defaults in `"veco.highlight.defaultStyle"`). The available keys and values are:
+
 - "text": string: without a defined regex pattern this is the string that will be matched
 - "regex": { pattern: "..." } a regex pattern for what will be matched
-- "diagnosticSeverity": controls whether to show a "none", <!--"hint", -->"information" or "error" marker in the overview ruler for each instance of this keyword. Appropriate ones will also be shown in the PROBLEMS panel.
-- "color": colour name (e.g. "green") or other colour code (e.g. "rgba(255,120,0,50)")
-- "backgroundColor": as for `color` above. Note: setting the last parameter to zero (alpha channel) disables the background colour.
+- "diagnosticSeverity": controls whether to show a 'error' | 'warning' | 'information' | 'hint' | 'none' marker in the overview ruler for each instance of this keyword. Appropriate ones will also be shown in the PROBLEMS panel.
+- "color": color name (e.g. "green") or other color code (e.g. "rgba(255,120,0,50)")
+- "backgroundColor": as for `color` above. Note: setting the last parameter to zero (alpha channel) disables the background color.
 - "border": CSS codes (e.g. "1px solid red" or "none")
 - "borderRadius": e.g. "2px"
-- "overviewRulerColor": colour name or colour code to use for this line in the overview ruler
+- "overviewRulerColor": color name or color code to use for this line in the overview ruler
 - "cursor": e.g. "pointer"
 - "isWholeLine": whether the whole line is to be highlighted, or just the matching characters
 - "before": { "contentText": "..." } -- adds text before the highlight. However, note that VSCode may well decide to add another copy of this when moving between open files, so it may have limited value.
 - "after": { "contentText": "..." } -- similarly, adds text after the highlight.
 
-The values used in color, borders, spacing etc. are what VSCode borrows from CSS. For more details see [this VSCode documentation](https://code.visualstudio.com/api/references/vscode-api#DecorationRenderOptions)).  Note that this is not the exactly same as CSS.
+The values used in color, borders, spacing etc. are what VSCode borrows from CSS. For more details see [this VSCode documentation](https://code.visualstudio.com/api/references/vscode-api#DecorationRenderOptions).  Note that this is not the exactly same as CSS.
 
 You can find a full list of theme colors here: https://code.visualstudio.com/api/references/theme-color.
 
@@ -58,12 +165,12 @@ An example of a custom configuration, showing a range of the different features:
 
 ```jsonc
 {
-  "todohighlight.isEnable": true,
-  "todohighlight.isCaseSensitive": true,
-  "todohighlight.maxFilesForSearch": 5120,
-  "todohighlight.toggleURI": false,
+  "veco.highlight.isEnable": true,
+  "veco.highlight.isCaseSensitive": true,
+  "veco.highlight.maxFilesForSearch": 5120,
+  "veco.highlight.toggleURI": false,
 
-  "todohighlight.keywords": [
+  "veco.highlight.keywords": [
     "FIXME:", // without further details, this will use the defaultStyle
     "REVIEW:", // as will this
 
@@ -119,10 +226,10 @@ An example of a custom configuration, showing a range of the different features:
     }
   ],
 
-  "todohighlight.keywordsPattern": "TODO:|FIXME:|\\(([^\\)]+)\\)", // highlight `TODO:`,`FIXME:` or content between parentheses
+  "veco.highlight.keywordsPattern": "TODO:|FIXME:|\\(([^\\)]+)\\)", // highlight `TODO:`,`FIXME:` or content between parentheses
   // NOTE: remember to escape the backslash if there's any in your regexp (using \\\\ instead of single backslash)"
 
-  "todohighlight.defaultStyle": {
+  "veco.highlight.defaultStyle": {
     "color": "red",
     "backgroundColor": "#ffab00",
     "overviewRulerColor": "#ffab00",
@@ -132,7 +239,7 @@ An example of a custom configuration, showing a range of the different features:
     "isWholeLine": false
     // other styling properties goes here ...
   },
-  "todohighlight.include": [
+  "veco.highlight.include": [
     "**/*.js",
     "**/*.jsx",
     "**/*.ts",
@@ -149,7 +256,7 @@ An example of a custom configuration, showing a range of the different features:
     "**/*.rb",
     "**/*.go"
   ],
-  "todohighlight.exclude": [
+  "veco.highlight.exclude": [
     "**/node_modules/**",
     "**/bower_components/**",
     "**/dist/**",
@@ -172,7 +279,7 @@ The `keywords` setting can be overridden in per-language configuration settings.
 ```jsonc
 {
   "[markdown]": {
-    "todohighlight.keywords": [
+    "veco.highlight.keywords": [
       {
         "text": "BRACKETS:",
         "color": "#000000",

@@ -1,7 +1,7 @@
 import vscode from 'vscode'
 import { getHighlightConfig } from '../utils/config'
 import { to } from '../utils/helper'
-import { escapeRegExp, searchAnnotations, showOutputChannel, triggerUpdateDecorations } from '../utils/highlight'
+import { escapeRegExp, searchAnnotations, showOutputChannel, triggerUpdateHighlight } from '../utils/highlight'
 import { state } from '../constants/globals'
 import { configs } from '../constants/config'
 
@@ -12,7 +12,9 @@ export const commands = {
 } as const
 
 /**
- * 'veco.highlight.toggleIsEnable' command
+ * toggle enable/disable highlight
+ *
+ * for `commands.toggleIsEnable`
  */
 export async function toggleIsEnableCommand() {
   const { config, isEnable } = getHighlightConfig()
@@ -26,13 +28,13 @@ export async function toggleIsEnableCommand() {
     vscode.window.showErrorMessage(errorMsg)
   }
 
-  triggerUpdateDecorations()
+  triggerUpdateHighlight()
 }
 
 /**
  * List all user comments/annotations based on the user provided / default settings
  *
- * 'veco.highlight.listAnnotations' command
+ * for `commands.listAnnotations`
  */
 export async function listAnnotationsCommand() {
   const { keywordsPattern, isCaseSensitive } = getHighlightConfig()
@@ -67,7 +69,7 @@ export async function listAnnotationsCommand() {
 /**
  * Show the output channel based on the `state.highlight.annotationList`
  *
- * 'veco.highlight.showOutputChannel' command
+ * for `commands.showOutputChannel`
  */
 export function showOutputChannelCommand() {
   showOutputChannel(state.highlight.annotationList)

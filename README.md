@@ -1,6 +1,6 @@
-# vscode-ecosystem
+# Vscode Ecosystem
 
-Collection of useful Vscode ecosystem for frontend development in one extension
+Collection of useful vscode ecosystem for frontend development in one extension
 
 <a href="https://marketplace.visualstudio.com/items?itemName=rifandani.vscode-ecosystem" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/v/rifandani.panda.svg?color=eee&amp;label=VS%20Code%20Marketplace&logo=visual-studio-code" alt="Visual Studio Marketplace Version" /></a>
 
@@ -12,7 +12,7 @@ Check for all the supported snippets [here](./src/snippets/react.json)
 
 ## Highlight Annotations
 
-Highlight defined annotations (ex. `TODO:`, `FIXME:`) within your code.
+Highlight defined annotations (ex. `NOTE:`, `TODO:`, `FIXME:`) within your code.
 
 Check the full details in [highlight docs](./src/docs/highlight.md)
 
@@ -26,7 +26,7 @@ Check the full details in [file nesting config docs](./src/docs/file-nesting.md)
 
 Highlight web colors in your document.
 
-*Coming Soon*
+Check the full details in [colorize config docs](./src/docs/colorize.md)
 
 ### Issues and Roadmap
 

@@ -31,6 +31,10 @@ export interface FileNestingDefaultConfig {
   expand: boolean
   patterns: Record<string, string>
 }
+
+export interface ColorizeDefaultConfig {
+  enabled: boolean
+}
 // #endregion
 
 // #region CONSTANTS
@@ -66,6 +70,10 @@ export const configs = {
     enabled: 'enabled',
     expand: 'expand',
     patterns: 'patterns',
+  },
+  colorize: {
+    root: 'veco.colorize',
+    enabled: 'enabled',
   },
 } as const
 
@@ -264,4 +272,11 @@ export const fileNestingDefaultConfig = {
     'vue.config.*': '*.env, .babelrc*, .codecov, .cssnanorc*, .env.*, .envrc, .htmlnanorc*, .lighthouserc.*, .mocha*, .postcssrc*, .terserrc*, api-extractor.json, ava.config.*, babel.config.*, contentlayer.config.*, cssnano.config.*, cypress.*, env.d.ts, formkit.config.*, formulate.config.*, histoire.config.*, htmlnanorc.*, i18n.config.*, jasmine.*, jest.config.*, jsconfig.*, karma*, lighthouserc.*, playwright.config.*, postcss.config.*, puppeteer.config.*, rspack.config.*, svgo.config.*, tailwind.config.*, tsconfig.*, tsdoc.*, uno.config.*, unocss.config.*, vitest.config.*, vuetify.config.*, webpack.config.*, windi.config.*',
   },
 } satisfies FileNestingDefaultConfig
+
+export const colorizeDefaultConfig = {
+  /**
+   * Enable or disable the web colors decorations
+   */
+  enabled: true,
+} satisfies ColorizeDefaultConfig
 // #endregion

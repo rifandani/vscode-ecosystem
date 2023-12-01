@@ -1,5 +1,5 @@
 import vscode from 'vscode'
-import type { FileNestingDefaultConfig, HighlightDefaultConfig } from '../constants/config'
+import type { ColorizeDefaultConfig, FileNestingDefaultConfig, HighlightDefaultConfig } from '../constants/config'
 import { configs, highlightDefaultConfig } from '../constants/config'
 
 /**
@@ -39,13 +39,26 @@ export function getHighlightConfig() {
 export function getFileNestingConfig() {
   const config = vscode.workspace.getConfiguration(configs.fileNesting.root)
   const enabled = config.get<FileNestingDefaultConfig['enabled']>(configs.fileNesting.enabled)
-  const expand = config.get<FileNestingDefaultConfig['expand']>(configs.fileNesting.expand)
-  const patterns = config.get<FileNestingDefaultConfig['patterns']>(configs.fileNesting.patterns)
+  const expand = config.get<FileNestingDefaultConfig['expand']>(configs.fileNesting.expand) // this is not used in the codebase, maybe we can delete this
+  const patterns = config.get<FileNestingDefaultConfig['patterns']>(configs.fileNesting.patterns) // this is not used in the codebase, maybe we can delete this
 
   return {
     config,
     enabled,
     expand,
     patterns,
+  }
+}
+
+/**
+ * get user defined "veco.colorize" extension config
+ */
+export function getColorizeConfig() {
+  const config = vscode.workspace.getConfiguration(configs.colorize.root)
+  const enabled = config.get<ColorizeDefaultConfig['enabled']>(configs.colorize.enabled)
+
+  return {
+    config,
+    enabled,
   }
 }

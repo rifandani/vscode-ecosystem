@@ -4,7 +4,7 @@ import vscode from 'vscode'
 import { minimatch } from 'minimatch'
 import { objectify } from '@rifandani/nxact-yutiriti'
 import type { HighlightState } from '../constants/globals'
-import { highlightDiagnostics, state } from '../constants/globals'
+import { diagnostics, state } from '../constants/globals'
 import type { KeywordObject } from '../constants/config'
 import { constants, highlightDefaultConfig } from '../constants/config'
 import { commands as highlightCommand } from '../commands/highlight'
@@ -184,6 +184,7 @@ function updateDecorations() {
     }
 
     const patternIndex = match.slice(1).indexOf(match[0])
+    // `NOTE:` or `TODO:` or etc...
     let matchedValue = Object.keys(state.highlight.decorationTypes)[patternIndex]
 
     if (postDiagnostics) {
@@ -222,11 +223,11 @@ function updateDecorations() {
     const rangeOption = isEnable && matches[_key] ? matches[_key] : []
     const decorationType = state.highlight.decorationTypes[_key]
 
-    // IMPORTANT: the actual logic to highlight
+    // NOTE: the actual logic to highlight
     vscode.window.activeTextEditor!.setDecorations(decorationType, rangeOption)
   })
 
-  highlightDiagnostics.set(vscode.window.activeTextEditor.document.uri, problems)
+  diagnostics.highlight.set(vscode.window.activeTextEditor.document.uri, problems)
 }
 
 /**
@@ -386,7 +387,6 @@ export async function searchAnnotations(pattern: string | RegExp) {
   let progress = 0
   const totalFiles = files.length
   const annotations = {}
-  // const annotationList: unknown[] = []
 
   function file_iterated() {
     times += 1
@@ -399,7 +399,6 @@ export async function searchAnnotations(pattern: string | RegExp) {
       const message = state.highlight.annotationList.length
       const tooltip = `${message} annotations result(s) found`
 
-      // state.highlight.annotationList = annotationList
       setStatusMsg(defaultIcon, message, tooltip)
       showOutputChannel(state.highlight.annotationList)
     }
@@ -511,7 +510,7 @@ export function init() {
  *
  * - set global `state.highlight.timeout`
  */
-export function triggerUpdateDecorations() {
+export function triggerUpdateHighlight() {
   if (state.highlight.timeout)
     clearTimeout(state.highlight.timeout)
 

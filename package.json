@@ -234,6 +234,11 @@
             "**/.next/**"
           ],
           "description": "Glob pattern that defines files and folders to exclude while listing annotations."
+        },
+        "veco.colorize.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable or disable the web colors colorizer"
         }
       }
     },
@@ -280,6 +285,11 @@
         "title": "Remove File Nesting Config",
         "category": "Veco - File Nesting",
         "command": "veco.fileNesting.remove"
+      },
+      {
+        "title": "Toggle colorize",
+        "category": "Veco - Colorize",
+        "command": "veco.colorize.toggleEnabled"
       }
     ]
   },
@@ -303,6 +313,7 @@
     "@types/vscode": "^1.84.2",
     "@vscode/vsce": "^2.22.0",
     "bumpp": "^9.2.0",
+    "colorjs.io": "^0.4.5",
     "eslint": "^8.54.0",
     "esno": "^4.0.0",
     "lint-staged": "^15.1.0",
