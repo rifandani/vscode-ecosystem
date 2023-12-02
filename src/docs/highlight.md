@@ -2,7 +2,7 @@
 
 ![](../../res/highlight.png)
 
-Forked from [vscode-todo-highlight by jgclark](https://github.com/jgclark/vscode-todo-highlight).
+Forked from [vscode-todo-highlight by jgclark](https://github.com/jgclark/vscode-todo-highlight) which I think is not actively maintained.
 
 The differences are:
 

@@ -449,39 +449,44 @@ export function init() {
   } = getHighlightConfig()
 
   if (!state.highlight.statusBarItem)
-    // init status bar item
+    // init global status bar item
     state.highlight.statusBarItem = createStatusBarItem()
 
   if (!state.highlight.outputChannel)
-    // init output channel
+    // init global output channel
     state.highlight.outputChannel = vscode.window.createOutputChannel(constants.highlight.outputChannel)
 
   if ((keywordsPattern as string).trim()) {
-    // `userDefaultStyle` overrides `highlightDefaultConfig.defaultStyle`
-    state.highlight.styleForRegExp = Object.assign({}, highlightDefaultConfig.defaultStyle, userDefaultStyle, {
+    // set the global `styleForRegExp`
+    state.highlight.styleForRegExp = {
+      ...highlightDefaultConfig.defaultStyle,
+      ...userDefaultStyle,
       overviewRulerLane: vscode.OverviewRulerLane.Right,
-    })
+    }
 
+    // set the global `pattern`, but as string
     state.highlight.pattern = keywordsPattern
   }
   else {
+    // set the global `assembledData`
     state.highlight.assembledData = getAssembledData()
 
     Object.keys(state.highlight.assembledData).forEach((_key) => {
-      const mergedStyle = Object.assign({}, {
+      const mergedStyle = {
         overviewRulerLane: vscode.OverviewRulerLane.Right,
-      }, state.highlight.assembledData![_key])
+        ...state.highlight.assembledData![_key],
+      }
 
       if (!mergedStyle.overviewRulerColor) {
         // use `backgroundColor` as the default `overviewRulerColor` if not specified by the user setting
         mergedStyle.overviewRulerColor = mergedStyle.backgroundColor
       }
 
-      // set the global `decorationTypes`
+      // set the global `decorationTypes` for a specific `_key`
       (state.highlight.decorationTypes as Record<PropertyKey, vscode.TextEditorDecorationType>)[_key] = vscode.window.createTextEditorDecorationType(mergedStyle)
     })
 
-    // give each keyword a group in the pattern
+    // set the global `pattern` still as string, give each keyword a group in the pattern
     state.highlight.pattern = Object.keys(state.highlight.assembledData).map((_key) => {
       // if `regex` is not exists in `keywords` user defined config
       if (state.highlight.assembledData && !state.highlight.assembledData[_key].regex)
@@ -494,7 +499,7 @@ export function init() {
     }).join('|')
   }
 
-  // override the global `pattern` again, based on the previous `pattern`
+  // override the global `pattern` string, and convert it into a regex
   state.highlight.pattern = new RegExp((state.highlight.pattern as string), isCaseSensitive ? 'g' : 'gi')
 }
 
