@@ -292,6 +292,18 @@
         "title": "Toggle colorize",
         "category": "Veco - Colorize",
         "command": "veco.colorize.toggleEnabled"
+      },
+      {
+        "title": "Insert log message",
+        "category": "Veco - Logger",
+        "command": "veco.logger.insert"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "veco.logger.insert",
+        "key": "ctrl+alt+l",
+        "mac": "ctrl+alt+l"
       }
     ]
   },
