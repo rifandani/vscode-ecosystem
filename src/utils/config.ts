@@ -7,7 +7,7 @@ import { configs, highlightDefaultConfig } from '../constants/config'
  */
 export function getHighlightConfig() {
   const config = vscode.workspace.getConfiguration(configs.highlight.root)
-  const isEnable = config.get<boolean>(configs.highlight.isEnable, highlightDefaultConfig.isEnable)
+  const enabled = config.get<boolean>(configs.highlight.enabled, highlightDefaultConfig.enabled)
   const toggleURI = config.get<boolean>(configs.highlight.toggleURI, highlightDefaultConfig.toggleURI)
   const isCaseSensitive = config.get<boolean>(configs.highlight.isCaseSensitive, highlightDefaultConfig.isCaseSensitive)
   const enableDiagnostics = config.get<boolean>(configs.highlight.enableDiagnostics, highlightDefaultConfig.enableDiagnostics)
@@ -20,7 +20,7 @@ export function getHighlightConfig() {
 
   return {
     config,
-    isEnable,
+    enabled,
     enableDiagnostics,
     isCaseSensitive,
     keywords,

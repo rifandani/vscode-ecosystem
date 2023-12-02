@@ -1,8 +1,10 @@
 # Intro
 
-Forked from [vscode-todo-highlight by jgclark](https://github.com/jgclark/vscode-todo-highlight). All credits goes to original authors.
+![](../../res/highlight.png)
 
-The big differences are:
+Forked from [vscode-todo-highlight by jgclark](https://github.com/jgclark/vscode-todo-highlight).
+
+The differences are:
 
 1. Full refactor to `typescript`
 2. Less global variables
@@ -23,7 +25,7 @@ This extension contributes the following commands to the Command palette.
 
 ```ts
 interface HighlightDefaultConfig {
-  isEnable: boolean
+  enabled: boolean
   toggleURI: boolean
   isCaseSensitive: boolean
   enableDiagnostics: boolean
@@ -39,7 +41,7 @@ const highlightDefaultConfig = {
   /**
    * Enable or disable the highlighting
    */
-  isEnable: true,
+  enabled: true,
   /**
    * If the file path within the output channel is not clickable,
    * set this to true to toggle the path patten between `<path>#<line>` and `<path>:<line>:<column>`
@@ -165,7 +167,7 @@ An example of a custom configuration, showing a range of the different features:
 
 ```jsonc
 {
-  "veco.highlight.isEnable": true,
+  "veco.highlight.enabled": true,
   "veco.highlight.isCaseSensitive": true,
   "veco.highlight.maxFilesForSearch": 5120,
   "veco.highlight.toggleURI": false,

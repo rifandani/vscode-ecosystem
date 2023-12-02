@@ -14,7 +14,7 @@ export interface KeywordObject extends Partial<vscode.DecorationRenderOptions> {
 export type Keyword = string | KeywordObject
 
 export interface HighlightDefaultConfig {
-  isEnable: boolean
+  enabled: boolean
   toggleURI: boolean
   isCaseSensitive: boolean
   enableDiagnostics: boolean
@@ -54,7 +54,7 @@ export const constants = {
 export const configs = {
   highlight: {
     root: 'veco.highlight',
-    isEnable: 'isEnable',
+    enabled: 'enabled',
     toggleURI: 'toggleURI',
     isCaseSensitive: 'isCaseSensitive',
     enableDiagnostics: 'enableDiagnostics',
@@ -81,7 +81,7 @@ export const highlightDefaultConfig = {
   /**
    * Enable or disable the highlighting
    */
-  isEnable: true,
+  enabled: true,
   /**
    * If the file path within the output channel is not clickable,
    * set this to true to toggle the path patten between `<path>#<line>` and `<path>:<line>:<column>`

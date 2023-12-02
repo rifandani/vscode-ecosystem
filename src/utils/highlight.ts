@@ -159,16 +159,14 @@ function getContent(lineText: string, match: RegExpExecArray | RegExpMatchArray)
 /**
  * actual logic to highlight the annotations
  *
- * side effects:
- *
  * - set global `state.highlight.decorationTypes[matchedValue]`
  */
 function updateDecorations() {
   if (!vscode.window.activeTextEditor || !vscode.window.activeTextEditor.document || !isFileNameOk(vscode.window.activeTextEditor.document.fileName))
     return
 
-  const { isEnable, enableDiagnostics, isCaseSensitive, keywordsPattern } = getHighlightConfig()
-  const postDiagnostics = !!isEnable && !!enableDiagnostics
+  const { enabled, enableDiagnostics, isCaseSensitive, keywordsPattern } = getHighlightConfig()
+  const postDiagnostics = !!enabled && !!enableDiagnostics
 
   const matches: Record<PropertyKey, Array<{ range: vscode.Range }>> = {}
   const problems: vscode.Diagnostic[] = []
@@ -220,7 +218,7 @@ function updateDecorations() {
   }
 
   Object.keys(state.highlight.decorationTypes).forEach((_key) => {
-    const rangeOption = isEnable && matches[_key] ? matches[_key] : []
+    const rangeOption = enabled && matches[_key] ? matches[_key] : []
     const decorationType = state.highlight.decorationTypes[_key]
 
     // NOTE: the actual logic to highlight
@@ -307,7 +305,6 @@ export function showOutputChannel(annotationList: HighlightState['annotationList
 
 /**
  * search annotations in a specific file, line by line
- * side effects:
  *
  * - set global `state.highlight.annotationList`
  */
@@ -355,8 +352,6 @@ function searchAnnotationInFile(file: vscode.TextDocument, annotations: Record<P
 
 /**
  * find files across all the workspace folders based on the `include` / `exclude` config.
- *
- * side effects:
  *
  * - set global `state.highlight.annotationList`
  */
@@ -505,8 +500,6 @@ export function init() {
 
 /**
  * call `updateDecorations`
- *
- * side effects:
  *
  * - set global `state.highlight.timeout`
  */

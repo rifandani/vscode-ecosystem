@@ -6,7 +6,7 @@ import { state } from '../constants/globals'
 import { configs } from '../constants/config'
 
 export const commands = {
-  toggleIsEnable: 'veco.highlight.toggleIsEnable',
+  toggleEnabled: 'veco.highlight.toggleEnabled',
   listAnnotations: 'veco.highlight.listAnnotations',
   showOutputChannel: 'veco.highlight.showOutputChannel',
 } as const
@@ -14,17 +14,17 @@ export const commands = {
 /**
  * toggle enable/disable highlight
  *
- * for `commands.toggleIsEnable`
+ * for `commands.toggleEnabled`
  */
-export async function toggleIsEnableCommand() {
-  const { config, isEnable } = getHighlightConfig()
+export async function toggleEnabledCommand() {
+  const { config, enabled } = getHighlightConfig()
 
   // passing `true` as third arguments will updates user global settings
-  const [,err] = await to(config.update(configs.highlight.isEnable, !isEnable, true))
+  const [,err] = await to(config.update(configs.highlight.enabled, !enabled, true))
 
   if (err) {
     // show error message if failed to update configs
-    const errorMsg = `Error ${isEnable ? 'disabling' : 'enabling'} highlight`
+    const errorMsg = `Error ${enabled ? 'disabling' : 'enabling'} highlight`
     vscode.window.showErrorMessage(errorMsg)
   }
 

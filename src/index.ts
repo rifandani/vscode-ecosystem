@@ -1,11 +1,11 @@
 import vscode from 'vscode'
-import { commands as highlightCommand, listAnnotationsCommand, showOutputChannelCommand, toggleIsEnableCommand } from './commands/highlight'
+import { commands as highlightCommand, listAnnotationsCommand, showOutputChannelCommand, toggleEnabledCommand as toggleEnabledHighlightCommand } from './commands/highlight'
 import { applyCommand, commands as fileNestingCommand, removeCommand } from './commands/file-nesting'
 import { init as initHighlight, triggerUpdateHighlight } from './utils/highlight'
 import { defaultState, diagnostics, state } from './constants/globals'
 import { getColorizeConfig, getHighlightConfig } from './utils/config'
 import { triggerUpdateColorize } from './utils/colorize'
-import { commands as colorizeCommand, toggleEnabledCommand } from './commands/colorize'
+import { commands as colorizeCommand, toggleEnabledCommand as toggleEnabledColorizeCommand } from './commands/colorize'
 
 export async function activate(context: vscode.ExtensionContext) {
   // initialize all necessary things for "highlight"
@@ -20,8 +20,8 @@ export async function activate(context: vscode.ExtensionContext) {
   const highlightDisposables = [
     diagnostics.highlight,
     vscode.commands.registerCommand(
-      highlightCommand.toggleIsEnable,
-      toggleIsEnableCommand,
+      highlightCommand.toggleEnabled,
+      toggleEnabledHighlightCommand,
     ),
     vscode.commands.registerCommand(
       highlightCommand.listAnnotations,
@@ -45,7 +45,7 @@ export async function activate(context: vscode.ExtensionContext) {
   ]
 
   const colorizeDisposables = [
-    vscode.commands.registerTextEditorCommand(colorizeCommand.toggleEnabled, toggleEnabledCommand),
+    vscode.commands.registerTextEditorCommand(colorizeCommand.toggleEnabled, toggleEnabledColorizeCommand),
   ]
 
   const listenerDisposables = [
@@ -71,12 +71,12 @@ export async function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.workspace.onDidChangeConfiguration(() => {
-      const { isEnable } = getHighlightConfig()
-      const { enabled } = getColorizeConfig()
+      const { enabled: enabledHighlight } = getHighlightConfig()
+      const { enabled: enabledColorize } = getColorizeConfig()
 
       // if disabled, do not re-initialize & update highlight
       // or we will not be able to clear the style immediately via 'toggle highlight' command
-      if (!isEnable || enabled)
+      if (!enabledHighlight || enabledColorize)
         return
 
       initHighlight()
