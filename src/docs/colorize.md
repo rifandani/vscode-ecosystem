@@ -7,14 +7,14 @@ Inspired by [vscode-ext-color-highlight by enyancc](https://github.com/enyancc/v
 The differences are:
 
 1. Full refactor to `typescript`
-2. Supports more color format
-3. Only one config properties
+2. Supports more color format using `colorjs.io`
+3. Only 1 config properties
 
 ## Commands
 
 This extension contributes the following commands to the Command palette.
 
-- `Toggle colorize`: enable or disable the web colors colorizer
+- `veco.colorize.toggleEnabled`: Toggle enable/disable the web colors colorizer
 
 ## Configurations
 

@@ -264,7 +264,7 @@
     ],
     "commands": [
       {
-        "title": "Toggle highlight",
+        "title": "Toggle enable/disable highlight",
         "category": "Veco - Highlight",
         "command": "veco.highlight.toggleEnabled"
       },
@@ -289,7 +289,7 @@
         "command": "veco.fileNesting.remove"
       },
       {
-        "title": "Toggle colorize",
+        "title": "Toggle enable/disable colorize",
         "category": "Veco - Colorize",
         "command": "veco.colorize.toggleEnabled"
       },
@@ -307,6 +307,11 @@
         "title": "Uncomment all commented log messages",
         "category": "Veco - Logger",
         "command": "veco.logger.uncomment"
+      },
+      {
+        "title": "Delete all log messages",
+        "category": "Veco - Logger",
+        "command": "veco.logger.delete"
       }
     ],
     "keybindings": [
@@ -324,6 +329,11 @@
         "command": "veco.logger.uncomment",
         "key": "alt+shift+u",
         "mac": "alt+shift+u"
+      },
+      {
+        "command": "veco.logger.delete",
+        "key": "alt+shift+d",
+        "mac": "alt+shift+d"
       }
     ]
   },
