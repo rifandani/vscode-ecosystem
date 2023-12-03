@@ -92,3 +92,40 @@ export const commentCommand: RegisterTextEditorCallback = async () => {
     }
   })
 }
+
+/**
+ * uncomment out all commented `console.log`
+ *
+ * for `commands.uncomment`
+ */
+export const uncommentCommand: RegisterTextEditorCallback = async () => {
+  const editor = vscode.window.activeTextEditor
+
+  if (!editor)
+    return
+
+  // Get all occurrences of '// console.log'
+  const documentText = editor.document.getText()
+  const consoleLogMatches = Array.from(documentText.matchAll(commentedConsoleLogRegex))
+
+  // perform an edit on the document associated with this text editor
+  editor.edit((editBuilder) => {
+    // Uncomment each commented 'console.log' occurrence
+    for (const match of consoleLogMatches) {
+      // no match, then continue iteration
+      if (!match.index)
+        continue
+
+      // get positions and range
+      const startPosition = editor.document.positionAt(match.index)
+      const endPosition = editor.document.positionAt(match.index + match[0].length)
+      const range = new vscode.Range(startPosition, endPosition)
+
+      // e.g "//      console.log("
+      const text = editor.document.getText(range)
+
+      const uncommentedText = text.replace(/^\s*\/\/\s*/, '')
+      editBuilder.replace(range, uncommentedText)
+    }
+  })
+}

@@ -1,7 +1,7 @@
 import vscode from 'vscode'
 import { commands as highlightCommand, listAnnotationsCommand, showOutputChannelCommand, toggleEnabledCommand as toggleEnabledHighlightCommand } from './commands/highlight'
 import { applyCommand, commands as fileNestingCommand, removeCommand } from './commands/file-nesting'
-import { commentCommand, insertCommand, commands as loggerCommand } from './commands/logger'
+import { commentCommand, insertCommand, commands as loggerCommand, uncommentCommand } from './commands/logger'
 import { init as initHighlight, triggerUpdateHighlight } from './utils/highlight'
 import { defaultState, diagnostics, state } from './constants/globals'
 import { getColorizeConfig, getHighlightConfig } from './utils/config'
@@ -52,6 +52,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const loggerDisposables = [
     vscode.commands.registerTextEditorCommand(loggerCommand.insert, insertCommand),
     vscode.commands.registerTextEditorCommand(loggerCommand.comment, commentCommand),
+    vscode.commands.registerTextEditorCommand(loggerCommand.uncomment, uncommentCommand),
   ]
 
   const listenerDisposables = [
