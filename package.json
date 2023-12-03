@@ -302,18 +302,28 @@
         "title": "Comment out all log messages",
         "category": "Veco - Logger",
         "command": "veco.logger.comment"
+      },
+      {
+        "title": "Uncomment all commented log messages",
+        "category": "Veco - Logger",
+        "command": "veco.logger.uncomment"
       }
     ],
     "keybindings": [
       {
         "command": "veco.logger.insert",
-        "key": "ctrl+alt+l",
-        "mac": "ctrl+alt+l"
+        "key": "alt+shift+i",
+        "mac": "alt+shift+i"
       },
       {
         "command": "veco.logger.comment",
         "key": "alt+shift+c",
         "mac": "alt+shift+c"
+      },
+      {
+        "command": "veco.logger.uncomment",
+        "key": "alt+shift+u",
+        "mac": "alt+shift+u"
       }
     ]
   },
