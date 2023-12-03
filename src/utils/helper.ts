@@ -83,3 +83,13 @@ export function generateRandomEmoji() {
 
   return emojis[randomIndex]
 }
+
+/**
+ * get real filename based on the input absolute path
+ *
+ * @param filename e.g "/Users/rifandani/Desktop/dev/react/react-app/src/modules/home/components/HomeClock/useHomeClock.hook.ts"
+ * @returns e.g "useHomeClock.hook.ts"
+ */
+export function getFilename(filename: string) {
+  return filename.split('/')[filename.length - 1]
+}

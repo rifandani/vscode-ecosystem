@@ -16,8 +16,8 @@
     "url": "https://github.com/rifandani/vscode-ecosystem/issues"
   },
   "categories": [
-    "Snippets",
-    "Other"
+    "Other",
+    "Snippets"
   ],
   "main": "./dist/index.js",
   "icon": "res/panda.png",
@@ -297,6 +297,11 @@
         "title": "Insert log message",
         "category": "Veco - Logger",
         "command": "veco.logger.insert"
+      },
+      {
+        "title": "Comment out all log messages",
+        "category": "Veco - Logger",
+        "command": "veco.logger.comment"
       }
     ],
     "keybindings": [
@@ -304,6 +309,11 @@
         "command": "veco.logger.insert",
         "key": "ctrl+alt+l",
         "mac": "ctrl+alt+l"
+      },
+      {
+        "command": "veco.logger.comment",
+        "key": "alt+shift+c",
+        "mac": "alt+shift+c"
       }
     ]
   },
