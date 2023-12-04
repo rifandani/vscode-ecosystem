@@ -241,6 +241,11 @@
           "type": "boolean",
           "default": true,
           "description": "Enable or disable the web colors colorizer"
+        },
+        "veco.colorize.namedColor": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also colorize named color (e.g red, black, white, grey, green, etc.)"
         }
       }
     },

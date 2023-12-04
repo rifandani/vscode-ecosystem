@@ -56,9 +56,11 @@ export function getFileNestingConfig() {
 export function getColorizeConfig() {
   const config = vscode.workspace.getConfiguration(configs.colorize.root)
   const enabled = config.get<ColorizeDefaultConfig['enabled']>(configs.colorize.enabled)
+  const namedColor = config.get<ColorizeDefaultConfig['namedColor']>(configs.colorize.namedColor)
 
   return {
     config,
     enabled,
+    namedColor,
   }
 }
