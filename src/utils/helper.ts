@@ -1,3 +1,4 @@
+import process from 'node:process'
 import vscode from 'vscode'
 import type { CustomDiagnosticSeverity } from '../constants/config'
 
@@ -92,4 +93,38 @@ export function generateRandomEmoji() {
  */
 export function getFilename(filename: string) {
   return filename.split('/').at(-1)
+}
+
+/**
+ * look behind assertions ("(?<!abc) & (?<=abc)") supported from ECMAScript 2018 and onwards.
+ *
+ * NOTE: using `node:process` to get nodejs version
+ */
+export function escapeRegExpGroups(str: string) {
+  // native in node.js 9 and up.
+  if (Number.parseFloat(process.version.replace('v', '')) > 9.0) {
+    const grpPattern = /(?<!\\)(\()([^?]\w*(?:\\+\w)*)(\))?/g
+    // make group non-capturing
+    return str.replace(grpPattern, '$1?:$2$3')
+  }
+  else {
+    return escapeRegExpGroupsLegacy(str)
+  }
+}
+
+/**
+ * remove any unsupported lookbehinds
+ */
+export function escapeRegExpGroupsLegacy(str: string) {
+  // Make all groups non-capturing
+  return str.replace(/\(\?<[=|!][^)]*\)/g, '').replace(/((?:[^\\]{1}|^)(?:(?:[\\]{2})+)?)(\((?!\?[:|=|!]))([^)]*)(\))/g, '$1$2?:$3$4')
+}
+
+/**
+ * to escape special characters in the input string (str)
+ * so that it can be safely used as a literal in a regular expression pattern
+ * without causing unintended interpretations of the special characters.
+ */
+export function escapeRegExp(str: string) {
+  return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
 }

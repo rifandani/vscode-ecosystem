@@ -34,6 +34,7 @@ export interface FileNestingDefaultConfig {
 
 export interface ColorizeDefaultConfig {
   enabled: boolean
+  namedColor: boolean
 }
 // #endregion
 
@@ -74,6 +75,7 @@ export const configs = {
   colorize: {
     root: 'veco.colorize',
     enabled: 'enabled',
+    namedColor: 'namedColor',
   },
 } as const
 
@@ -278,5 +280,9 @@ export const colorizeDefaultConfig = {
    * Enable or disable the web colors decorations
    */
   enabled: true,
+  /**
+   * Also colorize named color (e.g red, black, white, grey, green, etc.)
+   */
+  namedColor: false,
 } satisfies ColorizeDefaultConfig
 // #endregion

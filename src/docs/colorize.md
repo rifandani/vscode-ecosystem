@@ -8,7 +8,7 @@ The differences are:
 
 1. Full refactor to `typescript`
 2. Supports more color format using `colorjs.io`
-3. Only 1 config properties
+3. Only 2 config properties
 
 ## Commands
 
@@ -23,6 +23,7 @@ To add or change keywords and other settings, <kbd>command</kbd> + <kbd>,</kbd> 
 ```ts
 interface ColorizeDefaultConfig {
   enabled: boolean
+  namedColor: boolean
 }
 
 const colorizeDefaultConfig = {
@@ -30,5 +31,9 @@ const colorizeDefaultConfig = {
    * Enable or disable the web colors decorations
    */
   enabled: true,
+  /**
+   * Also colorize named color (e.g red, black, white, grey, green, etc.)
+   */
+  namedColor: false,
 } satisfies ColorizeDefaultConfig
 ```

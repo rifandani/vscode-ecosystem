@@ -1,4 +1,3 @@
-import process from 'node:process'
 import os from 'node:os'
 import vscode from 'vscode'
 import { minimatch } from 'minimatch'
@@ -9,7 +8,7 @@ import type { KeywordObject } from '../constants/config'
 import { constants, highlightDefaultConfig } from '../constants/config'
 import { commands as highlightCommand } from '../commands/highlight'
 import { getHighlightConfig } from './config'
-import { to } from './helper'
+import { escapeRegExp, escapeRegExpGroups, to } from './helper'
 
 const zapIcon = '$(zap)'
 const defaultIcon = '$(checklist)'
@@ -99,29 +98,6 @@ function getAssembledData() {
   })
 
   return result
-}
-
-/**
- * look behind assertions ("(?<!abc) & (?<=abc)") supported from ECMAScript 2018 and onwards.
- */
-function escapeRegExpGroups(str: string) {
-  // native in node.js 9 and up.
-  if (Number.parseFloat(process.version.replace('v', '')) > 9.0) {
-    const grpPattern = /(?<!\\)(\()([^?]\w*(?:\\+\w)*)(\))?/g
-    // make group non-capturing
-    return str.replace(grpPattern, '$1?:$2$3')
-  }
-  else {
-    return escapeRegExpGroupsLegacy(str)
-  }
-}
-
-/**
- * remove any unsupported lookbehinds
- */
-function escapeRegExpGroupsLegacy(str: string) {
-  // Make all groups non-capturing
-  return str.replace(/\(\?<[=|!][^)]*\)/g, '').replace(/((?:[^\\]{1}|^)(?:(?:[\\]{2})+)?)(\((?!\?[:|=|!]))([^)]*)(\))/g, '$1$2?:$3$4')
 }
 
 /**
@@ -414,15 +390,6 @@ export async function searchAnnotations(pattern: string | RegExp) {
     searchAnnotationInFile(file!, annotations, pattern)
     file_iterated()
   }
-}
-
-/**
- * to escape special characters in the input string (str)
- * so that it can be safely used as a literal in a regular expression pattern
- * without causing unintended interpretations of the special characters.
- */
-export function escapeRegExp(str: string) {
-  return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
 }
 
 /**

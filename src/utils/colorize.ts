@@ -1,39 +1,8 @@
 import Color from 'colorjs.io'
 import vscode from 'vscode'
 import { state } from '../constants/globals'
+import { colorNames, colorsRegex } from '../constants/colorize'
 import { getColorizeConfig } from './config'
-
-/**
- * regex to catch valid hex, rgb, rgba, hsl, display-p3, lch, oklab, and hwb color strings
- *
- * NOTE: it needs "g" flags to works when we `exec` and loop thru its array
- */
-// const hexRegex = /#(?:[0-9a-fA-F]{3}){1,2}\b/gi
-// const rgbRegex = /rgb\(\s*\d+\s*(?:,\s*\d+\s*){0,2}(?:\s*\/\s*(?:\d+\.?\d*|\.\d+))?\)/gi
-// const rgbaRegex = /rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*(?:\d+\.?\d*|\.\d+)\s*\)/gi
-// const hslRegex = /hsl\(\s*(\d+(\.\d+)?)deg,\s*(\d+(\.\d+)?)%,\s*(\d+(\.\d+)?)%\s*\)/gi
-// const displayP3Regex = /color\(display-p3\s*(?:\d+(\.\d+)?)\s+(?:\d+(\.\d+)?)\s+(?:\d+(\.\d+)?)\)/gi
-// const lchRegex = /lch\(\s*(?:\d+(\.\d+)?%?\s+){1,2}\d+(\.\d+)?\s+\d+(\.\d+)?\)/gi
-// const oklabRegex = /oklab\(\s*\d+(\.\d+)?%\s+\d+(\.\d+)\s+\d+(\.\d+)\)/gi
-// const hwbRegex = /hwb\(\s*(\d+(\.\d+)?)\s*(?:%|\s+)(\d+(\.\d+)?)%\s*(?:%|\s+)(\d+(\.\d+)?)%\)/gi
-
-/**
- * Combined regex pattern for all color types
- *
- * NOTE:
- *
- * rgb\(\s*\d+\s*(?:,\s*\d+\s*){0,2}(?:\s*\/\s*(?:\d+\.?\d*|\.\d+))?\) -> will match will match "rgb(100, 0, 0)" but not "rgb(255 0 0 / 0.5)"
- * rgb\(\s*\d+(\s+\d+){0,2}(?:\s*\/\s*(?:\d+\.?\d*|\.\d+))?\) -> will match "rgb(255 0 0 / 0.5)" but not "rgb(100, 0, 0)"
- *
- * @example
- *
- * // #fff is hex, #000000 is hex, #FFF000 is also hex
- * // rgb(100, 0, 0) is rgb, hsl(217deg, 90%, 61%) is hsl
- * // rgb(255 0 0 / 0.5) or rgba(255, 0, 0, 0.5) is rgba
- * // color(display-p3 1 1 0) is display p-3, lch(55% 132 95) is lch
- * // oklab(59% 0.1 0.1) is oklab, hwb(194 50% 20%) is hwb
- */
-const combinedRegex = /#(?:[0-9a-fA-F]{3}){1,2}\b|rgb\(\s*\d+\s*(?:,\s*\d+\s*){0,2}(?:\s*\/\s*(?:\d+\.?\d*|\.\d+))?\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*(?:\d+\.?\d*|\.\d+)\s*\)|hsl\(\s*(\d+(\.\d+)?)deg,\s*(\d+(\.\d+)?)%,\s*(\d+(\.\d+)?)%\s*\)|lch\(\s*(?:\d+(\.\d+)?%?\s+){1,2}\d+(\.\d+)?\s+\d+(\.\d+)?\)|color\(display-p3\s*(?:\d+(\.\d+)?)\s+(?:\d+(\.\d+)?)\s+(?:\d+(\.\d+)?)\)|oklab\(\s*\d+(\.\d+)?%\s+\d+(\.\d+)\s+\d+(\.\d+)\)|hwb\(\s*(\d+(\.\d+)?)\s*(?:%|\s+)(\d+(\.\d+)?)%\s*(?:%|\s+)(\d+(\.\d+)?)%\)/ig
 
 /**
  * get a contrast color based on input luminance
@@ -41,6 +10,16 @@ const combinedRegex = /#(?:[0-9a-fA-F]{3}){1,2}\b|rgb\(\s*\d+\s*(?:,\s*\d+\s*){0
 function getContrastColor(luminance: number) {
   // Determine contrast color
   return luminance > 0.5 ? '#000000' : '#ffffff'
+}
+
+/**
+ * get all combined color names regex
+ */
+function getCombinedColorsRegex() {
+  const colorNamesRegex = colorNames.join('|')
+  const combinedRegex = new RegExp(`#(?:[0-9a-fA-F]{3}){1,2}\\b|rgb\\(\\s*\\d+\\s*(?:,\\s*\\d+\\s*){0,2}(?:\\s*\\/\\s*(?:\\d+\\.?\\d*|\\.\\d+))?\\)|rgba\\(\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*\\d+\\s*,\\s*(?:\\d+\\.?\\d*|\\.\\d+)\\)|hsl\\(\\s*(\\d+(\\.\\d+)?)deg,\\s*(\\d+(\\.\\d+)?)%,\\s*(\\d+(\\.\\d+)?)%\\)|lch\\(\\s*(?:\\d+(\\.\\d+)?%?\\s+){1,2}\\d+(\\.\\d+)?\\s*\\)|oklab\\(\\s*(?:\\d+(\\.\\d+)?%?\\s+){2}\\d+(\\.\\d+)?\\s*\\)|hwb\\(\\s*(\\d+(\\.\\d+)?)\\s*(?:%|\\s+)(\\d+(\\.\\d+)?)%\\s*(?:%|\\s+)(\\d+(\\.\\d+)?)%\\)|color\\(display-p3\\s*(?:\\d+(\\.\\d+)?)\\s+(?:\\d+(\\.\\d+)?)\\s+(?:\\d+(\\.\\d+)?)\\)|${colorNamesRegex}`, 'ig')
+
+  return combinedRegex
 }
 
 /**
@@ -73,7 +52,7 @@ export async function updateColors() {
   clearDecorations()
 
   // do not update colors, if user disable it
-  const { enabled } = getColorizeConfig()
+  const { enabled, namedColor } = getColorizeConfig()
   if (!enabled)
     return
 
@@ -81,6 +60,7 @@ export async function updateColors() {
   // get the document text (includes line breaks like \n)
   const text = document.getText()
   const ranges: vscode.Range[] = []
+  const combinedRegex = namedColor ? getCombinedColorsRegex() : colorsRegex
 
   // loop thru all matches
   for (const match of text.matchAll(combinedRegex)) {

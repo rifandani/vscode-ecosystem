@@ -1,7 +1,7 @@
 import vscode from 'vscode'
 import { getHighlightConfig } from '../utils/config'
-import { to } from '../utils/helper'
-import { escapeRegExp, searchAnnotations, showOutputChannel, triggerUpdateHighlight } from '../utils/highlight'
+import { escapeRegExp, to } from '../utils/helper'
+import { searchAnnotations, showOutputChannel, triggerUpdateHighlight } from '../utils/highlight'
 import { state } from '../constants/globals'
 import { configs } from '../constants/config'
 
