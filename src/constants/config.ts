@@ -35,6 +35,13 @@ export interface FileNestingDefaultConfig {
 export interface ColorizeDefaultConfig {
   enabled: boolean
   namedColor: boolean
+  decorationType:
+    | 'background'
+    | 'foreground'
+    | 'outline'
+    | 'underline'
+    | 'dot-before'
+    | 'dot-after'
 }
 // #endregion
 
@@ -76,6 +83,7 @@ export const configs = {
     root: 'veco.colorize',
     enabled: 'enabled',
     namedColor: 'namedColor',
+    decorationType: 'decorationType',
   },
 } as const
 
@@ -284,5 +292,9 @@ export const colorizeDefaultConfig = {
    * Also colorize named color (e.g red, black, white, grey, green, etc.)
    */
   namedColor: false,
+  /**
+   * Decoration type to highlight the colors
+   */
+  decorationType: 'background',
 } satisfies ColorizeDefaultConfig
 // #endregion

@@ -24,6 +24,13 @@ To add or change keywords and other settings, <kbd>command</kbd> + <kbd>,</kbd> 
 interface ColorizeDefaultConfig {
   enabled: boolean
   namedColor: boolean
+  decorationType:
+    | 'background'
+    | 'foreground'
+    | 'outline'
+    | 'underline'
+    | 'dot-before'
+    | 'dot-after'
 }
 
 const colorizeDefaultConfig = {
@@ -35,5 +42,9 @@ const colorizeDefaultConfig = {
    * Also colorize named color (e.g red, black, white, grey, green, etc.)
    */
   namedColor: false,
+  /**
+   * Decoration type to highlight the colors
+   */
+  decorationType: 'background',
 } satisfies ColorizeDefaultConfig
 ```

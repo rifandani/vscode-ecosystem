@@ -57,10 +57,12 @@ export function getColorizeConfig() {
   const config = vscode.workspace.getConfiguration(configs.colorize.root)
   const enabled = config.get<ColorizeDefaultConfig['enabled']>(configs.colorize.enabled)
   const namedColor = config.get<ColorizeDefaultConfig['namedColor']>(configs.colorize.namedColor)
+  const decorationType = config.get<ColorizeDefaultConfig['decorationType']>(configs.colorize.decorationType)
 
   return {
     config,
     enabled,
     namedColor,
+    decorationType,
   }
 }
