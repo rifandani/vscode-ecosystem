@@ -2,7 +2,6 @@ import Color from 'colorjs.io'
 import vscode from 'vscode'
 import { state } from '../constants/globals'
 import { colorNames, colorsRegex } from '../constants/colorize'
-import type { ColorizeDefaultConfig } from '../constants/config'
 import { getColorizeConfig } from './config'
 
 /**
