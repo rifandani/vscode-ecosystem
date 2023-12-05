@@ -5,6 +5,62 @@ import { colorNames, colorsRegex } from '../constants/colorize'
 import { getColorizeConfig } from './config'
 
 /**
+ * decoration type mapper based on config property "decorationType"
+ */
+function decorationTypeMapper(color: Color) {
+  const { decorationType } = getColorizeConfig()
+  const colorStr = color.toString({ format: 'hex' })
+  const contrastColor = getContrastColor(color.luminance)
+  const rules: vscode.DecorationRenderOptions = {
+    overviewRulerColor: colorStr,
+    overviewRulerLane: vscode.OverviewRulerLane.Center,
+  }
+
+  switch (decorationType) {
+    case 'outline':
+      rules.border = `3px solid ${colorStr}`
+      break
+
+    case 'foreground':
+      rules.color = colorStr
+      break
+
+    case 'underline':
+      rules.color = `invalid; border-bottom:solid 2px ${colorStr}`
+      break
+
+    case 'dot-after':
+      rules.after = {
+        contentText: ' ',
+        margin: '0.1em 0.2em 0 0.2em',
+        width: '0.7em',
+        height: '0.7em',
+        backgroundColor: colorStr,
+      }
+      break
+
+    case 'dot-before':
+      rules.before = {
+        contentText: ' ',
+        margin: '0.1em 0.2em 0 0.2em',
+        width: '0.7em',
+        height: '0.7em',
+        backgroundColor: colorStr,
+      }
+      break
+
+    case 'background':
+    default:
+      rules.backgroundColor = colorStr
+      rules.color = contrastColor
+      rules.border = `3px solid ${colorStr}`
+      rules.borderRadius = '3px'
+  }
+
+  return rules
+}
+
+/**
  * get a contrast color based on input luminance
  */
 function getContrastColor(luminance: number) {
@@ -78,18 +134,12 @@ export async function updateColors() {
     const range = new vscode.Range(startPos, endPos)
     // instantiate the color object, using matched string value
     const color = new Color(matchedValue)
-    const backgroundColor = color.toString({ format: 'hex' })
-    const contrastColor = getContrastColor(color.luminance)
+    const decorationType = decorationTypeMapper(color)
 
     // push to `ranges` array, for later use
     ranges.push(range)
     // set global `decorationType` state, don't recreate the decorator each time there is an edit, use the same decorator for each call
-    state.colorize.decorationTypes.push(createTextEditorDecorationType({
-      backgroundColor,
-      color: contrastColor,
-      overviewRulerColor: backgroundColor,
-      overviewRulerLane: vscode.OverviewRulerLane.Center,
-    }))
+    state.colorize.decorationTypes.push(createTextEditorDecorationType(decorationType))
   }
 
   state.colorize.decorationTypes.forEach((decorationType, idx) => {
