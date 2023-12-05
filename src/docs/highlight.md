@@ -2,14 +2,7 @@
 
 ![](../../res/highlight.png)
 
-Forked from [vscode-todo-highlight by jgclark](https://github.com/jgclark/vscode-todo-highlight) which I think is not actively maintained.
-
-The differences are:
-
-1. Full refactor to `typescript`
-2. Less global variables
-3. Global variables are more organized which leads to much more readable and maintainable code
-4. Add one more default annotation -> `NOTE:`
+At times, the review of the "TODO"s, "TODO"s and "FIXME"s comment incorporated during coding might slip your mind before releasing the code to production. This extension brings attention to these elements, increasing the likelihood of remembering them. The extension displays them within the file, in the output channel, and can also optionally present them as decorations in the "overview ruler"
 
 ## Commands
 
@@ -275,7 +268,7 @@ An example of a custom configuration, showing a range of the different features:
 }
 ```
 
-### Per-language configuration
+## Per-language configuration
 
 The `keywords` setting can be overridden in per-language configuration settings. In this example, an additional  keyword is added for markdown files:
 
@@ -295,3 +288,14 @@ The `keywords` setting can be overridden in per-language configuration settings.
   }
 }
 ```
+
+## Inspirations
+
+Forked from [vscode-todo-highlight by jgclark](https://github.com/jgclark/vscode-todo-highlight) which I think is not actively maintained.
+
+The differences are:
+
+1. Full refactor to `typescript`
+2. Less global variables
+3. Global variables are more organized which leads to much more readable and maintainable code
+4. Add one more default annotation -> `NOTE:`

@@ -1,6 +1,6 @@
 # Vscode Ecosystem
 
-Collection of useful vscode ecosystem for frontend development in one extension
+Collection of useful vscode extensions functionality that I frequently use for frontend development in one extension
 
 <a href="https://marketplace.visualstudio.com/items?itemName=rifandani.vscode-ecosystem" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/v/rifandani.vscode-ecosystem?color=eee&amp;label=VS%20Code%20Marketplace&logo=visual-studio-code" alt="Visual Studio Marketplace Version" /></a>
 
@@ -8,7 +8,7 @@ Collection of useful vscode ecosystem for frontend development in one extension
 
 ## Snippets
 
-Javascript/Typescript and React snippets. Support fo Vue and Svelte coming soon.
+Javascript/Typescript and React snippets. Support for Vue and Svelte coming soon.
 
 Check for all the supported snippets [here](./src/snippets/react.json)
 
@@ -32,9 +32,15 @@ Check the full details in [colorize docs](./src/docs/colorize.md)
 
 ## Logger
 
-Easy console logger with support to comment, uncomment, and delete all occurrences.
+Easy console logger with support to comment, uncomment, and delete all occurrences. For now only supports Javascript code.
 
 Check the full details in [logger docs](./src/docs/logger.md)
+
+## Region Marker (Coming Soon)
+
+Define your code regions, fold and unfold them easily in your editor.
+
+Check the full details in [region folding docs](./src/docs/region-folding.md)
 
 ### Issues and Roadmap
 

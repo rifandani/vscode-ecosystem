@@ -2,13 +2,7 @@
 
 ![](../../res/colorize.png)
 
-Inspired by [vscode-ext-color-highlight by enyancc](https://github.com/enyancc/vscode-ext-color-highlight) which is not actively maintained.
-
-The differences are:
-
-1. Full refactor to `typescript`
-2. Supports more color format using `colorjs.io`
-3. Only 2 config properties
+Preview css web colors directly in your document/file. Supports named color, include / exclude custom defined directories, and modifying how the decoration styles applied in the document.
 
 ## Commands
 
@@ -89,3 +83,13 @@ const colorizeDefaultConfig = {
   ],
 } satisfies ColorizeDefaultConfig
 ```
+
+## Inspirations
+
+Inspired by [vscode-ext-color-highlight by enyancc](https://github.com/enyancc/vscode-ext-color-highlight) which is not actively maintained.
+
+The differences are:
+
+1. Full refactor to `typescript`
+2. Supports more color format using `colorjs.io`
+3. Fewer config properties
