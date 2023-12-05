@@ -3,6 +3,7 @@ import vscode from 'vscode'
 import { state } from '../constants/globals'
 import { colorNames, colorsRegex } from '../constants/colorize'
 import { getColorizeConfig } from './config'
+import { isFileNameOk } from './helper'
 
 /**
  * decoration type mapper based on config property "decorationType"
@@ -100,15 +101,16 @@ function clearDecorations() {
  */
 export async function updateColors() {
   const { activeTextEditor, createTextEditorDecorationType } = vscode.window
+  const { enabled, namedColor, include, exclude } = getColorizeConfig()
 
-  if (!activeTextEditor)
+  // do not update colors, if user the opened file doesn't fulfill `include` and `exclude` config
+  if (!activeTextEditor || !isFileNameOk({ include, exclude, filename: activeTextEditor.document.fileName }))
     return
 
   // clear/dispose all decorations first
   clearDecorations()
 
   // do not update colors, if user disable it
-  const { enabled, namedColor } = getColorizeConfig()
   if (!enabled)
     return
 

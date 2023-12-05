@@ -1,6 +1,5 @@
 import os from 'node:os'
 import vscode from 'vscode'
-import { minimatch } from 'minimatch'
 import { objectify } from '@rifandani/nxact-yutiriti'
 import type { HighlightState } from '../constants/globals'
 import { diagnostics, state } from '../constants/globals'
@@ -8,7 +7,7 @@ import type { KeywordObject } from '../constants/config'
 import { constants, highlightDefaultConfig } from '../constants/config'
 import { commands as highlightCommand } from '../commands/highlight'
 import { getHighlightConfig } from './config'
-import { escapeRegExp, escapeRegExpGroups, to } from './helper'
+import { escapeRegExp, escapeRegExpGroups, getPaths, isFileNameOk, to } from './helper'
 
 const zapIcon = '$(zap)'
 const defaultIcon = '$(checklist)'
@@ -101,31 +100,6 @@ function getAssembledData() {
 }
 
 /**
- * get paths based on the input `include` / `exclude` config
- */
-function getPaths(config: Array<string>) {
-  return Array.isArray(config)
-    ? `{${config.join(',')},` + `}`
-    : (typeof config == 'string' ? config : '')
-}
-
-/**
- * checks if the filename matches with the `include` / `exclude` config using `minimatch`
- */
-function isFileNameOk(filename: string) {
-  const { include, exclude } = getHighlightConfig()
-
-  const includePatterns = getPaths(include) || '{**/*}'
-  const excludePatterns = getPaths(exclude)
-
-  // converting glob expressions into JavaScript RegExp objects
-  const includeMatch = minimatch(filename, includePatterns)
-  const excludeMatch = minimatch(filename, excludePatterns)
-
-  return includeMatch && !excludeMatch
-}
-
-/**
  * returns the substring at the specified location
  */
 function getContent(lineText: string, match: RegExpExecArray | RegExpMatchArray) {
@@ -138,12 +112,12 @@ function getContent(lineText: string, match: RegExpExecArray | RegExpMatchArray)
  * - set global `state.highlight.decorationTypes[matchedValue]`
  */
 function updateDecorations() {
-  if (!vscode.window.activeTextEditor || !vscode.window.activeTextEditor.document || !isFileNameOk(vscode.window.activeTextEditor.document.fileName))
+  const { enabled, enableDiagnostics, isCaseSensitive, keywordsPattern, include, exclude } = getHighlightConfig()
+
+  if (!vscode.window.activeTextEditor || !isFileNameOk({ include, exclude, filename: vscode.window.activeTextEditor.document.fileName }))
     return
 
-  const { enabled, enableDiagnostics, isCaseSensitive, keywordsPattern } = getHighlightConfig()
   const postDiagnostics = !!enabled && !!enableDiagnostics
-
   const matches: Record<PropertyKey, Array<{ range: vscode.Range }>> = {}
   const problems: vscode.Diagnostic[] = []
   const text = vscode.window.activeTextEditor.document.getText()

@@ -1,5 +1,6 @@
 import process from 'node:process'
 import vscode from 'vscode'
+import { minimatch } from 'minimatch'
 import type { CustomDiagnosticSeverity } from '../constants/config'
 
 /**
@@ -93,6 +94,29 @@ export function generateRandomEmoji() {
  */
 export function getFilename(filename: string) {
   return filename.split('/').at(-1)
+}
+
+/**
+ * get paths based on the input `include` / `exclude` pattern config
+ */
+export function getPaths(patterns: Array<string>) {
+  return Array.isArray(patterns)
+    ? `{${patterns.join(',')},` + `}`
+    : (typeof patterns == 'string' ? patterns : '')
+}
+
+/**
+ * checks if the filename matches with the `include` / `exclude` config using `minimatch`
+ */
+export function isFileNameOk({ filename, include, exclude }: { include: string[], exclude: string[], filename: string }) {
+  const includePatterns = getPaths(include) || '{**/*}'
+  const excludePatterns = getPaths(exclude)
+
+  // converting glob expressions into JavaScript RegExp objects
+  const includeMatch = minimatch(filename, includePatterns)
+  const excludeMatch = minimatch(filename, excludePatterns)
+
+  return includeMatch && !excludeMatch
 }
 
 /**

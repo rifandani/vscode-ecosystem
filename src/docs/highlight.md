@@ -130,6 +130,7 @@ const highlightDefaultConfig = {
    */
   exclude: [
     '**/node_modules/**',
+    '**/dev-dist/**',
     '**/dist/**',
     '**/bower_components/**',
     '**/build/**',
