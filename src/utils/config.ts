@@ -1,6 +1,6 @@
 import vscode from 'vscode'
 import type { ColorizeDefaultConfig, FileNestingDefaultConfig, HighlightDefaultConfig } from '../constants/config'
-import { configs, highlightDefaultConfig } from '../constants/config'
+import { colorizeDefaultConfig, configs, highlightDefaultConfig } from '../constants/config'
 
 /**
  * get user defined "veco.highlight" extension config (with default values)
@@ -58,11 +58,15 @@ export function getColorizeConfig() {
   const enabled = config.get<ColorizeDefaultConfig['enabled']>(configs.colorize.enabled)
   const namedColor = config.get<ColorizeDefaultConfig['namedColor']>(configs.colorize.namedColor)
   const decorationType = config.get<ColorizeDefaultConfig['decorationType']>(configs.colorize.decorationType)
+  const include = config.get(configs.colorize.include, colorizeDefaultConfig.include)
+  const exclude = config.get(configs.colorize.exclude, colorizeDefaultConfig.exclude)
 
   return {
     config,
     enabled,
     namedColor,
     decorationType,
+    include,
+    exclude,
   }
 }

@@ -24,6 +24,8 @@ To add or change keywords and other settings, <kbd>command</kbd> + <kbd>,</kbd> 
 interface ColorizeDefaultConfig {
   enabled: boolean
   namedColor: boolean
+  include: string[]
+  exclude: string[]
   decorationType:
     | 'background'
     | 'foreground'
@@ -46,5 +48,44 @@ const colorizeDefaultConfig = {
    * Decoration type to highlight the colors
    */
   decorationType: 'background',
+  /**
+   * Glob patterns that defines the files to search for. Only include files you need
+   */
+  include: [
+    '**/*.js',
+    '**/*.jsx',
+    '**/*.ts',
+    '**/*.tsx',
+    '**/*.vue',
+    '**/*.svelte',
+    '**/*.astro',
+    '**/*.html',
+    '**/*.css',
+    '**/*.scss',
+    '**/*.less',
+    '**/*.md',
+    '**/*.mdx',
+    '**/*.json',
+  ],
+  /**
+   * Glob pattern that defines files and folders to exclude while listing annotations.
+   */
+  exclude: [
+    '**/node_modules/**',
+    '**/bower_components/**',
+    '**/dev-dist/**',
+    '**/dist/**',
+    '**/build/**',
+    '**/html/**',
+    '**/coverage/**',
+    '**/out/**',
+    '**/.vscode/**',
+    '**/.vscode-test/**',
+    '**/.github/**',
+    '**/_output/**',
+    '**/*.min.*',
+    '**/*.map',
+    '**/.next/**',
+  ],
 } satisfies ColorizeDefaultConfig
 ```
