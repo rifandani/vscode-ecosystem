@@ -4,8 +4,8 @@ import { objectify } from '@rifandani/nxact-yutiriti'
 import type { HighlightState } from '../constants/globals'
 import { diagnostics, state } from '../constants/globals'
 import type { KeywordObject } from '../constants/config'
-import { constants, highlightDefaultConfig } from '../constants/config'
-import { commands as highlightCommand } from '../commands/highlight'
+import { configs, constants, highlightDefaultConfig } from '../constants/config'
+import { commandIds } from '../commands/highlight'
 import { getHighlightConfig } from './config'
 import { escapeRegExp, escapeRegExpGroups, getPaths, isFileNameOk, to } from './helper'
 
@@ -25,7 +25,7 @@ function createStatusBarItem() {
   const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)
   statusBarItem.text = defaultIcon + defaultMsg
   statusBarItem.tooltip = statusBarItemTooltip
-  statusBarItem.command = highlightCommand.showOutputChannel
+  statusBarItem.command = commandIds.showOutputChannel
 
   return statusBarItem
 };
@@ -454,4 +454,21 @@ export function triggerUpdateHighlight() {
     clearTimeout(state.highlight.timeout)
 
   state.highlight.timeout = setTimeout(updateDecorations, 0)
+}
+
+/**
+ * handle vscode `onDidChangeConfiguration` for highlight config
+ */
+export function handleChangeConfiguration(event: vscode.ConfigurationChangeEvent) {
+  // do not bother to reinitialize, if the highlight config does not changed
+  if (event.affectsConfiguration(configs.highlight.root)) {
+    const { enabled } = getHighlightConfig()
+
+    // do not bother to reinitialize, if `enabled` is `false`
+    // or we will not be able to clear the style immediately via 'toggle highlight' command
+    if (enabled) {
+      init()
+      triggerUpdateHighlight()
+    }
+  }
 }

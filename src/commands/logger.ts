@@ -3,13 +3,6 @@ import { generateRandomEmoji, getFilename } from '../utils/helper'
 
 type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerTextEditorCommand>[1]
 
-export const commands = {
-  insert: 'veco.logger.insert',
-  comment: 'veco.logger.comment',
-  uncomment: 'veco.logger.uncomment',
-  delete: 'veco.logger.delete',
-} as const
-
 const consoleLogRegex = /\bconsole\.log\s*\(/g
 const commentedConsoleLogRegex = /\/\/\s*console\.log\(/g
 const entireConsoleLogRegex = /\/\/\s*console\.log\s*\([^)]*\);?|\bconsole\.log\s*\([^)]*\);?/g // also catch the commented console.log or not
@@ -19,7 +12,7 @@ const entireConsoleLogRegex = /\/\/\s*console\.log\s*\([^)]*\);?|\bconsole\.log\
  *
  * for `commands.insert`
  */
-export const insertCommand: RegisterTextEditorCallback = async () => {
+const insert: RegisterTextEditorCallback = async () => {
   const editor = vscode.window.activeTextEditor
 
   if (!editor)
@@ -56,7 +49,7 @@ export const insertCommand: RegisterTextEditorCallback = async () => {
  *
  * for `commands.comment`
  */
-export const commentCommand: RegisterTextEditorCallback = async () => {
+const comment: RegisterTextEditorCallback = async () => {
   const editor = vscode.window.activeTextEditor
 
   if (!editor)
@@ -99,7 +92,7 @@ export const commentCommand: RegisterTextEditorCallback = async () => {
  *
  * for `commands.uncomment`
  */
-export const uncommentCommand: RegisterTextEditorCallback = async () => {
+const uncomment: RegisterTextEditorCallback = async () => {
   const editor = vscode.window.activeTextEditor
 
   if (!editor)
@@ -136,7 +129,7 @@ export const uncommentCommand: RegisterTextEditorCallback = async () => {
  *
  * for `commands.delete`
  */
-export const deleteCommand: RegisterTextEditorCallback = async () => {
+const deleteAll: RegisterTextEditorCallback = async () => {
   const editor = vscode.window.activeTextEditor
 
   if (!editor)
@@ -163,3 +156,29 @@ export const deleteCommand: RegisterTextEditorCallback = async () => {
     }
   })
 }
+
+export const commandIds = {
+  insert: 'veco.logger.insert',
+  comment: 'veco.logger.comment',
+  uncomment: 'veco.logger.uncomment',
+  delete: 'veco.logger.delete',
+} as const
+
+export const disposables = [
+  vscode.commands.registerCommand(
+    commandIds.insert,
+    insert,
+  ),
+  vscode.commands.registerCommand(
+    commandIds.comment,
+    comment,
+  ),
+  vscode.commands.registerCommand(
+    commandIds.uncomment,
+    uncomment,
+  ),
+  vscode.commands.registerCommand(
+    commandIds.delete,
+    deleteAll,
+  ),
+]

@@ -1,12 +1,12 @@
 import vscode from 'vscode'
-import { commands as highlightCommand, listAnnotationsCommand, showOutputChannelCommand, toggleEnabledCommand as toggleEnabledHighlightCommand } from './commands/highlight'
-import { applyCommand, commands as fileNestingCommand, removeCommand } from './commands/file-nesting'
-import { commentCommand, deleteCommand, insertCommand, commands as loggerCommand, uncommentCommand } from './commands/logger'
-import { init as initHighlight, triggerUpdateHighlight } from './utils/highlight'
+import { disposables as highlightDisposables } from './commands/highlight'
+import { disposables as fileNestingDisposables } from './commands/file-nesting'
+import { disposables as colorizeDisposables } from './commands/colorize'
+import { disposables as loggerDisposables } from './commands/logger'
+import { disposables as regionDisposables } from './commands/region'
+import { handleChangeConfiguration as handleChangeConfigurationHighlight, init as initHighlight, triggerUpdateHighlight } from './utils/highlight'
+import { handleChangeConfiguration as handleChangeConfigurationColorize, triggerUpdateColorize } from './utils/colorize'
 import { defaultState, diagnostics, state } from './constants/globals'
-import { getColorizeConfig, getHighlightConfig } from './utils/config'
-import { triggerUpdateColorize } from './utils/colorize'
-import { commands as colorizeCommand, toggleEnabledCommand as toggleEnabledColorizeCommand } from './commands/colorize'
 
 export async function activate(context: vscode.ExtensionContext) {
   // initialize all necessary things for "highlight"
@@ -17,44 +17,6 @@ export async function activate(context: vscode.ExtensionContext) {
     triggerUpdateHighlight()
     triggerUpdateColorize()
   }
-
-  const highlightDisposables = [
-    diagnostics.highlight,
-    vscode.commands.registerCommand(
-      highlightCommand.toggleEnabled,
-      toggleEnabledHighlightCommand,
-    ),
-    vscode.commands.registerCommand(
-      highlightCommand.listAnnotations,
-      listAnnotationsCommand,
-    ),
-    vscode.commands.registerCommand(
-      highlightCommand.showOutputChannel,
-      showOutputChannelCommand,
-    ),
-  ]
-
-  const fileNestingDisposables = [
-    vscode.commands.registerCommand(
-      fileNestingCommand.apply,
-      applyCommand,
-    ),
-    vscode.commands.registerCommand(
-      fileNestingCommand.remove,
-      removeCommand,
-    ),
-  ]
-
-  const colorizeDisposables = [
-    vscode.commands.registerTextEditorCommand(colorizeCommand.toggleEnabled, toggleEnabledColorizeCommand),
-  ]
-
-  const loggerDisposables = [
-    vscode.commands.registerTextEditorCommand(loggerCommand.insert, insertCommand),
-    vscode.commands.registerTextEditorCommand(loggerCommand.comment, commentCommand),
-    vscode.commands.registerTextEditorCommand(loggerCommand.uncomment, uncommentCommand),
-    vscode.commands.registerTextEditorCommand(loggerCommand.delete, deleteCommand),
-  ]
 
   const listenerDisposables = [
     vscode.window.onDidChangeActiveTextEditor((editor) => {
@@ -78,19 +40,9 @@ export async function activate(context: vscode.ExtensionContext) {
       diagnostics.highlight.set(event.uri, [])
     }),
 
-    vscode.workspace.onDidChangeConfiguration(() => {
-      const { enabled: enabledHighlight } = getHighlightConfig()
-      const { enabled: enabledColorize } = getColorizeConfig()
-
-      // if disabled, do not re-initialize & update highlight
-      // or we will not be able to clear the style immediately via 'toggle highlight' command
-      if (!enabledHighlight || enabledColorize)
-        return
-
-      initHighlight()
-      triggerUpdateHighlight()
-
-      triggerUpdateColorize()
+    vscode.workspace.onDidChangeConfiguration((event) => {
+      handleChangeConfigurationHighlight(event)
+      handleChangeConfigurationColorize(event)
     }),
   ]
 
@@ -99,6 +51,7 @@ export async function activate(context: vscode.ExtensionContext) {
     ...fileNestingDisposables,
     ...colorizeDisposables,
     ...loggerDisposables,
+    ...regionDisposables,
     ...listenerDisposables,
   ]
 

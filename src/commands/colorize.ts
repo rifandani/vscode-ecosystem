@@ -6,16 +6,12 @@ import { triggerUpdateColorize } from '../utils/colorize'
 
 type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerTextEditorCommand>[1]
 
-export const commands = {
-  toggleEnabled: 'veco.colorize.toggleEnabled',
-} as const
-
 /**
  * toggle enable/disable colorize
  *
  * for `commands.toggleEnabled`
  */
-export const toggleEnabledCommand: RegisterTextEditorCallback = async () => {
+const toggleEnabled: RegisterTextEditorCallback = async () => {
   const { config, enabled } = getColorizeConfig()
 
   // passing `true` as third arguments will updates user global settings
@@ -29,3 +25,14 @@ export const toggleEnabledCommand: RegisterTextEditorCallback = async () => {
 
   triggerUpdateColorize()
 }
+
+export const commandIds = {
+  toggleEnabled: 'veco.colorize.toggleEnabled',
+} as const
+
+export const disposables = [
+  vscode.commands.registerCommand(
+    commandIds.toggleEnabled,
+    toggleEnabled,
+  ),
+]
