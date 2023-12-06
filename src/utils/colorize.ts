@@ -2,6 +2,7 @@ import Color from 'colorjs.io'
 import vscode from 'vscode'
 import { state } from '../constants/globals'
 import { colorNames, colorsRegex } from '../constants/colorize'
+import { configs } from '../constants/config'
 import { getColorizeConfig } from './config'
 import { isFileNameOk } from './helper'
 
@@ -160,4 +161,18 @@ export function triggerUpdateColorize() {
     clearTimeout(state.colorize.timeout)
 
   state.colorize.timeout = setTimeout(updateColors, 0)
+}
+
+/**
+ * handle vscode `onDidChangeConfiguration` for colorize config
+ */
+export function handleChangeConfiguration(event: vscode.ConfigurationChangeEvent) {
+  // do not bother to reinitialize, if the colorize config does not changed
+  if (event.affectsConfiguration(configs.colorize.root)) {
+    const { enabled } = getColorizeConfig()
+
+    // do not bother to reinitialize, if `enabled` is `false`
+    if (enabled)
+      triggerUpdateColorize()
+  }
 }

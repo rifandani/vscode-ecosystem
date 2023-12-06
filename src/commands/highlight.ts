@@ -2,21 +2,17 @@ import vscode from 'vscode'
 import { getHighlightConfig } from '../utils/config'
 import { escapeRegExp, to } from '../utils/helper'
 import { searchAnnotations, showOutputChannel, triggerUpdateHighlight } from '../utils/highlight'
-import { state } from '../constants/globals'
+import { diagnostics, state } from '../constants/globals'
 import { configs } from '../constants/config'
 
-export const commands = {
-  toggleEnabled: 'veco.highlight.toggleEnabled',
-  listAnnotations: 'veco.highlight.listAnnotations',
-  showOutputChannel: 'veco.highlight.showOutputChannel',
-} as const
+type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerTextEditorCommand>[1]
 
 /**
  * toggle enable/disable highlight
  *
  * for `commands.toggleEnabled`
  */
-export async function toggleEnabledCommand() {
+const toggleEnabled: RegisterTextEditorCallback = async () => {
   const { config, enabled } = getHighlightConfig()
 
   // passing `true` as third arguments will updates user global settings
@@ -36,7 +32,7 @@ export async function toggleEnabledCommand() {
  *
  * for `commands.listAnnotations`
  */
-export async function listAnnotationsCommand() {
+const listAnnotations: RegisterTextEditorCallback = async () => {
   const { keywordsPattern, isCaseSensitive } = getHighlightConfig()
 
   if ((keywordsPattern as string).trim()) {
@@ -66,11 +62,24 @@ export async function listAnnotationsCommand() {
   searchAnnotations(searchPattern)
 }
 
-/**
- * Show the output channel based on the `state.highlight.annotationList`
- *
- * for `commands.showOutputChannel`
- */
-export function showOutputChannelCommand() {
-  showOutputChannel(state.highlight.annotationList)
-}
+export const commandIds = {
+  toggleEnabled: 'veco.highlight.toggleEnabled',
+  listAnnotations: 'veco.highlight.listAnnotations',
+  showOutputChannel: 'veco.highlight.showOutputChannel',
+} as const
+
+export const disposables = [
+  diagnostics.highlight,
+  vscode.commands.registerCommand(
+    commandIds.toggleEnabled,
+    toggleEnabled,
+  ),
+  vscode.commands.registerCommand(
+    commandIds.listAnnotations,
+    listAnnotations,
+  ),
+  vscode.commands.registerCommand(
+    commandIds.showOutputChannel,
+    () => showOutputChannel(state.highlight.annotationList),
+  ),
+]

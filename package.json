@@ -16,8 +16,9 @@
     "url": "https://github.com/rifandani/vscode-ecosystem/issues"
   },
   "keywords": [
-    "logger",
     "highlight",
+    "logger",
+    "region",
     "snippet"
   ],
   "categories": [
@@ -385,6 +386,11 @@
         "title": "Delete all log messages",
         "category": "Veco - Logger",
         "command": "veco.logger.delete"
+      },
+      {
+        "title": "Insert region marker comment",
+        "category": "Veco - Region",
+        "command": "veco.region.mark"
       }
     ],
     "keybindings": [

@@ -12,9 +12,9 @@ Javascript/Typescript and React snippets. Support for Vue and Svelte coming soon
 
 Check for all the supported snippets [here](./src/snippets/react.json)
 
-## Highlight Annotations
+## Highlight
 
-Highlight defined annotations (ex. `NOTE:`, `TODO:`, `FIXME:`) within your code.
+Highlight defined annotations (ex. `NOTE:`, `TODO:`, `FIXME:`) within your code. Supports for custom annotations and decoration styles.
 
 Check the full details in [highlight docs](./src/docs/highlight.md)
 
@@ -36,11 +36,11 @@ Easy console logger with support to comment, uncomment, and delete all occurrenc
 
 Check the full details in [logger docs](./src/docs/logger.md)
 
-## Region Marker (Coming Soon)
+## Region
 
-Define your code regions, fold and unfold them easily in your editor.
+Automatic code regions marker and view all marker easily in your editor.
 
-Check the full details in [region folding docs](./src/docs/region-folding.md)
+Check the full details in [region docs](./src/docs/region.md)
 
 ### Issues and Roadmap
 
