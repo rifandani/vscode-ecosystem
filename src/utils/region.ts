@@ -40,8 +40,6 @@ export function getLanguageCommentFormat(languageId: string) {
       }
 
     case 'astro':
-    case 'c':
-    case 'cpp':
     case 'csharp':
     case 'dart':
     case 'delphi':
@@ -63,6 +61,14 @@ export function getLanguageCommentFormat(languageId: string) {
         full: `// #region {{name}} \n{{text}}\n// #endregion`,
       }
 
+    case 'c':
+    case 'cpp':
+      return {
+        start: '#pragma region {{name}}',
+        end: '#pragma endregion',
+        full: `#pragma region {{name}} \n{{text}}\n#pragma endregion`,
+      }
+
     case 'html':
     case 'markdown':
     case 'xml':
@@ -74,9 +80,9 @@ export function getLanguageCommentFormat(languageId: string) {
 
     case 'vb':
       return {
-        start: `' #region {{name}}`,
-        end: `' #endregion`,
-        full: `' #region {{name}}\n{{text}}\n' #endregion`,
+        start: `#Region {{name}}`,
+        end: `#End Region`,
+        full: `#Region {{name}}\n{{text}}\n'#End Region`,
       }
 
     case 'css':

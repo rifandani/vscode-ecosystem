@@ -36,11 +36,11 @@ Easy console logger with support to comment, uncomment, and delete all occurrenc
 
 Check the full details in [logger docs](./src/docs/logger.md)
 
-## Region (Coming Soon)
+## Region
 
 Automatic code regions marker and view all marker easily in your editor.
 
-Check the full details in [region folding docs](./src/docs/region-folding.md)
+Check the full details in [region docs](./src/docs/region.md)
 
 ### Issues and Roadmap
 
