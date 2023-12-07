@@ -87,6 +87,7 @@ export function getLanguageCommentFormat(languageId: string) {
 
     case 'css':
     case 'less':
+    case 'sass':
     case 'scss':
     default:
       return {

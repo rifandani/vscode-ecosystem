@@ -6,8 +6,6 @@ type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerText
 
 /**
  * create region marker based on the cursor position / user selection
- *
- * for `commands.mark`
  */
 const mark: RegisterTextEditorCallback = async () => {
   const editor = vscode.window.activeTextEditor
@@ -40,13 +38,32 @@ const mark: RegisterTextEditorCallback = async () => {
   }
 }
 
+/**
+ * search all "#region" occurrences across the workspace using the vscode built-in `findInFiles` command
+ */
+const search: RegisterTextEditorCallback = async () => {
+  // open the "Find in Files" widget
+  await vscode.commands.executeCommand('workbench.actions.findInFiles')
+
+  // simulate typing the search string programmatically
+  await vscode.commands.executeCommand('default:type', { text: '#region' })
+
+  // it's not possible to simulate "Enter" programmatically
+  vscode.window.showInformationMessage('Please press "Enter" manually to submit the search')
+}
+
 export const commandIds = {
   mark: 'veco.region.mark',
+  search: 'veco.region.search',
 } as const
 
 export const disposables = [
   vscode.commands.registerCommand(
     commandIds.mark,
     mark,
+  ),
+  vscode.commands.registerCommand(
+    commandIds.search,
+    search,
   ),
 ]

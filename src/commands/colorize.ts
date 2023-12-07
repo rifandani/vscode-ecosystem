@@ -8,8 +8,6 @@ type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerText
 
 /**
  * toggle enable/disable colorize
- *
- * for `commands.toggleEnabled`
  */
 const toggleEnabled: RegisterTextEditorCallback = async () => {
   const { config, enabled } = getColorizeConfig()

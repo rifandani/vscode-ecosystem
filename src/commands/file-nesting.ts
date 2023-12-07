@@ -5,8 +5,6 @@ type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerText
 
 /**
  * applying file nesting config to global/workspace settings
- *
- * for `commands.apply`
  */
 const apply: RegisterTextEditorCallback = async () => {
   const global = 'Apply config in global settings'
@@ -29,8 +27,6 @@ const apply: RegisterTextEditorCallback = async () => {
 
 /**
  * removing file nesting config in both global/workspace settings
- *
- * for `commands.remove`
  */
 const remove: RegisterTextEditorCallback = async () => {
   await removeFileNestingSettings()
