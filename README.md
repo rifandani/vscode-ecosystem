@@ -38,7 +38,7 @@ Check the full details in [logger docs](./src/docs/logger.md)
 
 ## Region
 
-Automatic code regions marker and view all marker easily in your editor.
+Automatic code regions marker, search, and delete markers easily in your editor.
 
 Check the full details in [region docs](./src/docs/region.md)
 
