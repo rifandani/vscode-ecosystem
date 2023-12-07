@@ -391,6 +391,11 @@
         "title": "Insert region marker comment",
         "category": "Veco - Region",
         "command": "veco.region.mark"
+      },
+      {
+        "title": "Search all region marker occurrences across workspace",
+        "category": "Veco - Region",
+        "command": "veco.region.search"
       }
     ],
     "keybindings": [
@@ -419,6 +424,11 @@
         "key": "ctrl+m ctrl+r",
         "mac": "ctrl+m ctrl+r",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "veco.region.search",
+        "key": "ctrl+m ctrl+s",
+        "mac": "ctrl+m ctrl+s"
       }
     ]
   },

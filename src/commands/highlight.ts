@@ -9,8 +9,6 @@ type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerText
 
 /**
  * toggle enable/disable highlight
- *
- * for `commands.toggleEnabled`
  */
 const toggleEnabled: RegisterTextEditorCallback = async () => {
   const { config, enabled } = getHighlightConfig()
@@ -29,8 +27,6 @@ const toggleEnabled: RegisterTextEditorCallback = async () => {
 
 /**
  * List all user comments/annotations based on the user provided / default settings
- *
- * for `commands.listAnnotations`
  */
 const listAnnotations: RegisterTextEditorCallback = async () => {
   const { keywordsPattern, isCaseSensitive } = getHighlightConfig()

@@ -9,8 +9,6 @@ const entireConsoleLogRegex = /\/\/\s*console\.log\s*\([^)]*\);?|\bconsole\.log\
 
 /**
  * insert logger based on the cursor position / user selection
- *
- * for `commands.insert`
  */
 const insert: RegisterTextEditorCallback = async () => {
   const editor = vscode.window.activeTextEditor
@@ -46,8 +44,6 @@ const insert: RegisterTextEditorCallback = async () => {
 
 /**
  * comment out all detected `console.log`
- *
- * for `commands.comment`
  */
 const comment: RegisterTextEditorCallback = async () => {
   const editor = vscode.window.activeTextEditor
@@ -89,8 +85,6 @@ const comment: RegisterTextEditorCallback = async () => {
 
 /**
  * uncomment out all commented `console.log`
- *
- * for `commands.uncomment`
  */
 const uncomment: RegisterTextEditorCallback = async () => {
   const editor = vscode.window.activeTextEditor
@@ -126,8 +120,6 @@ const uncomment: RegisterTextEditorCallback = async () => {
 
 /**
  * delete all `console.log` occurences, wether it's commented or not
- *
- * for `commands.delete`
  */
 const deleteAll: RegisterTextEditorCallback = async () => {
   const editor = vscode.window.activeTextEditor
