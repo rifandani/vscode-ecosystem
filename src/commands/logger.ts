@@ -56,7 +56,7 @@ const comment: RegisterTextEditorCallback = async () => {
   const consoleLogMatches = Array.from(documentText.matchAll(consoleLogRegex))
 
   // perform an edit on the document associated with this text editor
-  editor.edit((editBuilder) => {
+  await editor.edit((editBuilder) => {
     // Comment out each 'console.log' occurrence
     for (const match of consoleLogMatches) {
       // no match, then continue iteration
@@ -97,7 +97,7 @@ const uncomment: RegisterTextEditorCallback = async () => {
   const consoleLogMatches = Array.from(documentText.matchAll(commentedConsoleLogRegex))
 
   // perform an edit on the document associated with this text editor
-  editor.edit((editBuilder) => {
+  await editor.edit((editBuilder) => {
     // Uncomment each commented 'console.log' occurrence
     for (const match of consoleLogMatches) {
       // no match, then continue iteration
@@ -132,7 +132,7 @@ const deleteAll: RegisterTextEditorCallback = async () => {
   const consoleLogMatches = Array.from(documentText.matchAll(entireConsoleLogRegex))
 
   // perform an edit on the document associated with this text editor
-  editor.edit((editBuilder) => {
+  await editor.edit((editBuilder) => {
     // Delete each 'console.log' occurrence
     for (const match of consoleLogMatches) {
       // no match, then continue iteration
