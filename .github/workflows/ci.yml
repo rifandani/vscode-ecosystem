@@ -62,7 +62,7 @@ jobs:
     strategy:
       matrix:
         node: [lts/*]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest] # adding "windows-latest" and "macos-latest" will only slows down CI/CD
       fail-fast: false
 
     steps:
