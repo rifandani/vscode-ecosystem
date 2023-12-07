@@ -10,6 +10,7 @@ This extension contributes the following commands to the Command palette.
 
 - `veco.region.mark`: Insert region marker comment (`ctrl+m ctrl+r`)
 - `veco.region.search`: Search all region marker occurrences across the workspace (`ctrl+m ctrl+s`)
+- `veco.region.delete`: Delete all region marker occurrences in the current document (`ctrl+m ctrl+d`)
 
 ## Inspirations
 

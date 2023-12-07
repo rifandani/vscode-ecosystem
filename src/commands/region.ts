@@ -4,6 +4,8 @@ import { getLanguageCommentFormat } from '../utils/region'
 
 type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerTextEditorCommand>[1]
 
+const regionRegex = /#(?:region|Region)|#pragma region|#endregion|#pragma endregion|#End Region/g
+
 /**
  * create region marker based on the cursor position / user selection
  */
@@ -31,7 +33,7 @@ const mark: RegisterTextEditorCallback = async () => {
     const wrappedCode = template(languageCommentFormat.full, { text, name: regionName })
 
     // replace selection with wrapped version
-    editor.edit(editBuilder => editBuilder.replace(selection, wrappedCode))
+    await editor.edit(editBuilder => editBuilder.replace(selection, wrappedCode))
 
     // format the document
     await vscode.commands.executeCommand('editor.action.formatDocument')
@@ -52,9 +54,43 @@ const search: RegisterTextEditorCallback = async () => {
   vscode.window.showInformationMessage('Please press "Enter" manually to submit the search')
 }
 
+/**
+ * delete all region marker occurrences in the current document
+ */
+const deleteInDocument: RegisterTextEditorCallback = async () => {
+  const editor = vscode.window.activeTextEditor
+
+  if (!editor)
+    return
+
+  // Get all occurrences of region markers
+  const text = editor.document.getText()
+  const lines = text.split(/\r?\n/)
+
+  await editor.edit((editBuilder) => {
+    for (const [lineNumber, line] of lines.entries()) {
+      const match = line.match(regionRegex)
+
+      if (!match)
+        continue
+
+      const startLinePosition = new vscode.Position(lineNumber, 0)
+      const endLinePosition = new vscode.Position(lineNumber, line.length)
+      const range = new vscode.Range(startLinePosition, endLinePosition)
+
+      // delete region markers occurrence
+      editBuilder.delete(range)
+    }
+  })
+
+  // format the document
+  await vscode.commands.executeCommand('editor.action.formatDocument')
+}
+
 export const commandIds = {
   mark: 'veco.region.mark',
   search: 'veco.region.search',
+  delete: 'veco.region.delete',
 } as const
 
 export const disposables = [
@@ -65,5 +101,9 @@ export const disposables = [
   vscode.commands.registerCommand(
     commandIds.search,
     search,
+  ),
+  vscode.commands.registerCommand(
+    commandIds.delete,
+    deleteInDocument,
   ),
 ]
