@@ -45,10 +45,6 @@ export interface ColorizeDefaultConfig {
     | 'dot-before'
     | 'dot-after'
 }
-
-export interface RegionDefaultConfig {
-  enabled: boolean
-}
 // #endregion
 
 // #region CONSTANTS
@@ -92,10 +88,6 @@ export const configs = {
     include: 'include',
     exclude: 'exclude',
     decorationType: 'decorationType',
-  },
-  region: {
-    root: 'veco.region',
-    enabled: 'enabled',
   },
 } as const
 
@@ -348,11 +340,4 @@ export const colorizeDefaultConfig = {
     '**/.next/**',
   ],
 } satisfies ColorizeDefaultConfig
-
-export const regionDefaultConfig = {
-  /**
-   * Enable or disable the region ???
-   */
-  enabled: true,
-} satisfies RegionDefaultConfig
 // #endregion
