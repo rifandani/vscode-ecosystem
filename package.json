@@ -401,6 +401,11 @@
         "title": "Delete all region marker occurrences in the current document",
         "category": "Veco - Region",
         "command": "veco.region.delete"
+      },
+      {
+        "title": "Delete all region marker occurrences across the workspace",
+        "category": "Veco - Region",
+        "command": "veco.region.deleteAll"
       }
     ],
     "keybindings": [
@@ -439,6 +444,11 @@
         "command": "veco.region.delete",
         "key": "ctrl+m ctrl+d",
         "mac": "ctrl+m ctrl+d"
+      },
+      {
+        "command": "veco.region.deleteAll",
+        "key": "ctrl+m ctrl+a",
+        "mac": "ctrl+m ctrl+a"
       }
     ]
   },
