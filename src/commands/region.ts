@@ -1,10 +1,9 @@
+import { Buffer } from 'node:buffer'
 import vscode from 'vscode'
 import { template } from '@rifandani/nxact-yutiriti'
-import { getLanguageCommentFormat } from '../utils/region'
+import { deleteRegionMarker, excludedFiles, getLanguageCommentFormat, includedFiles, regionRegex } from '../utils/region'
 
 type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerTextEditorCommand>[1]
-
-const regionRegex = /#(?:region|Region)|#pragma region|#endregion|#pragma endregion|#End Region/g
 
 /**
  * create region marker based on the cursor position / user selection
@@ -41,11 +40,11 @@ const mark: RegisterTextEditorCallback = async () => {
 }
 
 /**
- * search all "#region" occurrences across the workspace using the vscode built-in `findInFiles` command
+ * search all region markers occurrences across the workspace using the vscode built-in `findInFiles` command
  */
 const search: RegisterTextEditorCallback = async () => {
   // open the "Find in Files" widget
-  await vscode.commands.executeCommand('workbench.actions.findInFiles')
+  await vscode.commands.executeCommand('workbench.action.findInFiles')
 
   // simulate typing the search string programmatically
   await vscode.commands.executeCommand('default:type', { text: '#region' })
@@ -63,34 +62,57 @@ const deleteInDocument: RegisterTextEditorCallback = async () => {
   if (!editor)
     return
 
-  // Get all occurrences of region markers
-  const text = editor.document.getText()
-  const lines = text.split(/\r?\n/)
+  // `document` is using the current editor document
+  await deleteRegionMarker({ editor, document: editor.document })
+}
 
-  await editor.edit((editBuilder) => {
-    for (const [lineNumber, line] of lines.entries()) {
-      const match = line.match(regionRegex)
+/**
+ * delete all region marker occurrences across the workspace
+ */
+const deleteAllAcrossWorkspace: RegisterTextEditorCallback = async () => {
+  await vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: 'Deleting all region markers',
+    cancellable: false,
+  }, async (progress) => {
+    progress.report({ increment: 0, message: 'Starting deletion...' })
 
-      if (!match)
-        continue
+    // find all supported file types
+    const files = await vscode.workspace.findFiles(includedFiles, excludedFiles)
+    const totalFiles = files.length
 
-      const startLinePosition = new vscode.Position(lineNumber, 0)
-      const endLinePosition = new vscode.Position(lineNumber, line.length)
-      const range = new vscode.Range(startLinePosition, endLinePosition)
+    const promises = files.map(async (file, idx) => {
+      const document = await vscode.workspace.openTextDocument(file)
+      const content = document.getText()
+      // preserve the original line ending
+      const originalLineEnding = content.includes('\n') ? '\n' : '\r'
+      const updatedContent = content
+        .split(/\r?\n/)
+        .filter(line => !line.match(regionRegex))
+        .join(originalLineEnding)
 
-      // delete region markers occurrence
-      editBuilder.delete(range)
-    }
+      // we don't use `editor.edit()` because it needs the document to be opened in the editor
+      // by using `fs.writeFile`, we can edit the text content in the background
+      await vscode.workspace.fs.writeFile(file, Buffer.from(updatedContent))
+
+      // updates the progress
+      const percentageComplete = ((idx + 1) / totalFiles) * 100
+      progress.report({ increment: percentageComplete, message: `Processed ${idx + 1} of ${totalFiles} files` })
+    })
+
+    // run as parallel
+    await Promise.allSettled(promises)
+
+    // Show an information message
+    vscode.window.showInformationMessage('All region markers deleted!')
   })
-
-  // format the document
-  await vscode.commands.executeCommand('editor.action.formatDocument')
 }
 
 export const commandIds = {
   mark: 'veco.region.mark',
   search: 'veco.region.search',
   delete: 'veco.region.delete',
+  deleteAll: 'veco.region.deleteAll',
 } as const
 
 export const disposables = [
@@ -105,5 +127,9 @@ export const disposables = [
   vscode.commands.registerCommand(
     commandIds.delete,
     deleteInDocument,
+  ),
+  vscode.commands.registerCommand(
+    commandIds.deleteAll,
+    deleteAllAcrossWorkspace,
   ),
 ]
