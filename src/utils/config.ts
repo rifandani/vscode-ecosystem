@@ -1,5 +1,5 @@
 import vscode from 'vscode'
-import type { ColorizeDefaultConfig, FileNestingDefaultConfig, HighlightDefaultConfig, RegionDefaultConfig } from '../constants/config'
+import type { ColorizeDefaultConfig, FileNestingDefaultConfig, HighlightDefaultConfig } from '../constants/config'
 import { colorizeDefaultConfig, configs, highlightDefaultConfig } from '../constants/config'
 
 /**
@@ -68,18 +68,5 @@ export function getColorizeConfig() {
     decorationType,
     include,
     exclude,
-  }
-}
-
-/**
- * get user defined "veco.region" extension config
- */
-export function getRegionConfig() {
-  const config = vscode.workspace.getConfiguration(configs.region.root)
-  const enabled = config.get<RegionDefaultConfig['enabled']>(configs.region.enabled)
-
-  return {
-    config,
-    enabled,
   }
 }

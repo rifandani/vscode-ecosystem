@@ -40,20 +40,6 @@ const mark: RegisterTextEditorCallback = async () => {
 }
 
 /**
- * search all region markers occurrences across the workspace using the vscode built-in `findInFiles` command
- */
-const search: RegisterTextEditorCallback = async () => {
-  // open the "Find in Files" widget
-  await vscode.commands.executeCommand('workbench.action.findInFiles')
-
-  // simulate typing the search string programmatically
-  await vscode.commands.executeCommand('default:type', { text: '#region' })
-
-  // it's not possible to simulate "Enter" programmatically
-  vscode.window.showInformationMessage('Please press "Enter" manually to submit the search')
-}
-
-/**
  * delete all region marker occurrences in the current document
  */
 const deleteInDocument: RegisterTextEditorCallback = async () => {
@@ -110,7 +96,6 @@ const deleteAllAcrossWorkspace: RegisterTextEditorCallback = async () => {
 
 export const commandIds = {
   mark: 'veco.region.mark',
-  search: 'veco.region.search',
   delete: 'veco.region.delete',
   deleteAll: 'veco.region.deleteAll',
 } as const
@@ -119,10 +104,6 @@ export const disposables = [
   vscode.commands.registerCommand(
     commandIds.mark,
     mark,
-  ),
-  vscode.commands.registerCommand(
-    commandIds.search,
-    search,
   ),
   vscode.commands.registerCommand(
     commandIds.delete,
