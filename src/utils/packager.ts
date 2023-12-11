@@ -4,6 +4,7 @@ import vscode from 'vscode'
 import type { PackageJson } from 'type-fest'
 import { commandIds } from '../commands/packager'
 import { views } from '../constants/config'
+import { detectPackageManager, executeCommand } from './helper'
 
 type ContextValue = 'dependencies' | 'devDependencies' | 'nestedDependencies' | 'nestedDevDependencies'
 
@@ -156,7 +157,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   }
 
   /**
-   * method to perform the `commandIds.link` command
+   * open/link the selected dependency to the external NPM website documentation
    */
   public async link(dep: DependencyTreeItem) {
     const url = `https://www.npmjs.com/package/${dep.label}`
@@ -164,10 +165,38 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
 
     await vscode.env.openExternal(parsedUrl)
   }
+
+  /**
+   * uninstall/remove the selected dependency
+   *
+   * NOTE: should only run if the selected dependency is the root "dependencies" / "devDependencies"
+   */
+  public async remove(dep: DependencyTreeItem) {
+    let cmd = ''
+    const packageManager = await detectPackageManager()
+
+    switch (packageManager) {
+      case 'bun':
+        cmd = `bun remove ${dep.label}`
+        break
+      case 'yarn':
+        cmd = `yarn remove ${dep.label}`
+        break
+      case 'pnpm':
+        cmd = `pnpm remove ${dep.label}`
+        break
+      default:
+        cmd = `npm uninstall ${dep.label}`
+        break
+    }
+
+    executeCommand({ cmd })
+    this.refresh()
+  }
 }
 
 /**
- * init commands and register tree data provider
+ * init all commands and register tree data provider
  */
 export function init() {
   const rootPath = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
@@ -187,6 +216,10 @@ export function init() {
     vscode.commands.registerCommand(
       commandIds.link,
       (dep: DependencyTreeItem) => nodeDependenciesProvider.link(dep),
+    ),
+    vscode.commands.registerCommand(
+      commandIds.remove,
+      (dep: DependencyTreeItem) => nodeDependenciesProvider.remove(dep),
     ),
   ]
 }

@@ -1,12 +1,10 @@
 import vscode from 'vscode'
 import { applyFileNestingSettings, removeFileNestingSettings } from '../utils/file-nesting'
 
-type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerTextEditorCommand>[1]
-
 /**
  * applying file nesting config to global/workspace settings
  */
-const apply: RegisterTextEditorCallback = async () => {
+async function apply() {
   const global = 'Apply config in global settings'
   const workspace = 'Apply config in workspace settings'
   const questions: vscode.QuickPickItem[] = [
@@ -28,7 +26,7 @@ const apply: RegisterTextEditorCallback = async () => {
 /**
  * removing file nesting config in both global/workspace settings
  */
-const remove: RegisterTextEditorCallback = async () => {
+async function remove() {
   await removeFileNestingSettings()
   await removeFileNestingSettings(false)
 }
@@ -41,10 +39,10 @@ export const commandIds = {
 export const disposables = [
   vscode.commands.registerCommand(
     commandIds.apply,
-    apply,
+    () => apply(),
   ),
   vscode.commands.registerCommand(
     commandIds.remove,
-    remove,
+    () => remove(),
   ),
 ]
