@@ -5,7 +5,7 @@ import type { PackageJson } from 'type-fest'
 import { commandIds } from '../commands/packager'
 import { views } from '../constants/config'
 
-type ContextValue = 'dependencies' | 'devDependencies' | 'nestedDependencies'
+type ContextValue = 'dependencies' | 'devDependencies' | 'nestedDependencies' | 'nestedDevDependencies'
 
 /**
  * A tree item is an UI element of the tree.
@@ -16,11 +16,17 @@ class DependencyTreeItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
-    public readonly contextValue: ContextValue,
-    public readonly description?: string,
+    public readonly options?: {
+      readonly contextValue?: ContextValue
+      readonly description?: string
+      readonly command?: vscode.Command
+    },
   ) {
     super(label, collapsibleState)
 
+    this.contextValue = options?.contextValue
+    this.description = options?.description
+    this.command = options?.command
     this.iconPath = {
       light: path.join(__filename, '..', '..', 'res', 'light', 'type-hierarchy-sub.svg'),
       dark: path.join(__filename, '..', '..', 'res', 'dark', 'type-hierarchy-sub.svg'),
@@ -60,8 +66,8 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     const nodeModulePackageJsonPath = path.join(this.workspaceRoot!, 'node_modules', element.label as string, 'package.json')
     const packageJsonContent = this.getPackageJsonContent(nodeModulePackageJsonPath)
 
-    const deps = this.getModuleDependencyTrees('dependencies', packageJsonContent.dependencies)
-    const devDeps = this.getModuleDependencyTrees('devDependencies', packageJsonContent.devDependencies)
+    const deps = this.getModuleDependencyTrees('nestedDependencies', packageJsonContent.dependencies)
+    const devDeps = this.getModuleDependencyTrees('nestedDevDependencies', packageJsonContent.devDependencies)
 
     return Promise.resolve(deps.concat(devDeps))
   }
@@ -107,21 +113,25 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   /**
    * given the `dependencies` object from `package.json`, then convert it into `DependencyTreeItem`
    */
-  private getModuleDependencyTrees(contextValue: ContextValue, deps: PackageJson['dependencies']) {
-    return deps
-      ? Object.keys(deps).map((moduleName) => {
-        const version = deps[moduleName] as string
-        const modulePath = path.join(this.workspaceRoot!, 'node_modules', moduleName)
-        const moduleExists = this.pathExists(modulePath)
+  private getModuleDependencyTrees(contextValue: ContextValue, deps: PackageJson['dependencies'] = {}) {
+    return Object.keys(deps).map((moduleName) => {
+      const version = deps[moduleName] as string
+      const modulePath = path.join(this.workspaceRoot!, 'node_modules', moduleName)
+      const moduleExists = this.pathExists(modulePath)
+      const description
+        = contextValue === 'devDependencies' || contextValue === 'nestedDevDependencies'
+          ? `${version} (dev)`
+          : version
 
-        return new DependencyTreeItem(
-          moduleName,
-          moduleExists ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
+      return new DependencyTreeItem(
+        moduleName,
+        moduleExists ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
+        {
           contextValue,
-          contextValue === 'devDependencies' ? `${version} (dev)` : version,
-        )
-      })
-      : []
+          description,
+        },
+      )
+    })
   }
 
   /**
@@ -141,8 +151,18 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   /**
    * notify all subscribers of the event from "onDidChangeTreeData"
    */
-  public refresh(): void {
+  public refresh() {
     this._onDidChangeTreeData.fire()
+  }
+
+  /**
+   * method to perform the `commandIds.link` command
+   */
+  public async link(dep: DependencyTreeItem) {
+    const url = `https://www.npmjs.com/package/${dep.label}`
+    const parsedUrl = vscode.Uri.parse(url)
+
+    await vscode.env.openExternal(parsedUrl)
   }
 }
 
@@ -156,13 +176,17 @@ export function init() {
   const nodeDependenciesProvider = new NodeDependenciesProvider(rootPath)
 
   return [
+    vscode.window.registerTreeDataProvider(
+      views.veco_packager,
+      nodeDependenciesProvider,
+    ),
     vscode.commands.registerCommand(
       commandIds.refreshEntry,
       () => nodeDependenciesProvider.refresh(),
     ),
-    vscode.window.registerTreeDataProvider(
-      views.veco_packager,
-      nodeDependenciesProvider,
+    vscode.commands.registerCommand(
+      commandIds.link,
+      (dep: DependencyTreeItem) => nodeDependenciesProvider.link(dep),
     ),
   ]
 }
