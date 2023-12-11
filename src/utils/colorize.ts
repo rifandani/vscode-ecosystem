@@ -96,7 +96,7 @@ function clearDecorations() {
 /**
  * - clear/dispose all decorations first
  * - get document text from the current `activeTextEditor`
- * - loop thru all matches based on the `combinedRegex`
+ * - loop thru all matches based on the combined colors regex
  * - instantiate the color object, using matched string value
  * - set decorations based on the start/end positions and decoration/styling
  */

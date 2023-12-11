@@ -6,11 +6,15 @@ import { disposables as loggerDisposables } from './commands/logger'
 import { disposables as regionDisposables } from './commands/region'
 import { handleChangeConfiguration as handleChangeConfigurationHighlight, init as initHighlight, triggerUpdateHighlight } from './utils/highlight'
 import { handleChangeConfiguration as handleChangeConfigurationColorize, triggerUpdateColorize } from './utils/colorize'
+import { init as initPackager } from './utils/packager'
 import { defaultState, diagnostics, state } from './constants/globals'
 
 export async function activate(context: vscode.ExtensionContext) {
   // initialize all necessary things for "highlight"
   initHighlight()
+
+  // initialize all necessary things for "packager"
+  const packagerDisposables = initPackager()
 
   // trigger update "highlight" & "colorize" for the first time
   if (vscode.window.activeTextEditor) {
@@ -52,6 +56,7 @@ export async function activate(context: vscode.ExtensionContext) {
     ...colorizeDisposables,
     ...loggerDisposables,
     ...regionDisposables,
+    ...packagerDisposables,
     ...listenerDisposables,
   ]
 
