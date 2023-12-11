@@ -3,12 +3,10 @@ import vscode from 'vscode'
 import { template } from '@rifandani/nxact-yutiriti'
 import { deleteRegionMarker, excludedFiles, getLanguageCommentFormat, includedFiles, regionRegex } from '../utils/region'
 
-type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerTextEditorCommand>[1]
-
 /**
  * create region marker based on the cursor position / user selection
  */
-const mark: RegisterTextEditorCallback = async () => {
+async function mark() {
   const editor = vscode.window.activeTextEditor
 
   if (!editor)
@@ -42,7 +40,7 @@ const mark: RegisterTextEditorCallback = async () => {
 /**
  * delete all region marker occurrences in the current document
  */
-const deleteInDocument: RegisterTextEditorCallback = async () => {
+async function deleteInDocument() {
   const editor = vscode.window.activeTextEditor
 
   if (!editor)
@@ -55,7 +53,7 @@ const deleteInDocument: RegisterTextEditorCallback = async () => {
 /**
  * delete all region marker occurrences across the workspace
  */
-const deleteAllAcrossWorkspace: RegisterTextEditorCallback = async () => {
+async function deleteAllAcrossWorkspace() {
   await vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
     title: 'Deleting all region markers',
@@ -103,14 +101,14 @@ export const commandIds = {
 export const disposables = [
   vscode.commands.registerCommand(
     commandIds.mark,
-    mark,
+    () => mark(),
   ),
   vscode.commands.registerCommand(
     commandIds.delete,
-    deleteInDocument,
+    () => deleteInDocument(),
   ),
   vscode.commands.registerCommand(
     commandIds.deleteAll,
-    deleteAllAcrossWorkspace,
+    () => deleteAllAcrossWorkspace(),
   ),
 ]

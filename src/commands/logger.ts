@@ -1,8 +1,6 @@
 import vscode from 'vscode'
 import { generateRandomEmoji, getFilename } from '../utils/helper'
 
-type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerTextEditorCommand>[1]
-
 const consoleLogRegex = /\bconsole\.log\s*\(/g
 const commentedConsoleLogRegex = /\/\/\s*console\.log\(/g
 const entireConsoleLogRegex = /\/\/\s*console\.log\s*\([^)]*\);?|\bconsole\.log\s*\([^)]*\);?/g // also catch the commented console.log or not
@@ -10,7 +8,7 @@ const entireConsoleLogRegex = /\/\/\s*console\.log\s*\([^)]*\);?|\bconsole\.log\
 /**
  * insert logger based on the cursor position / user selection
  */
-const insert: RegisterTextEditorCallback = async () => {
+async function insert() {
   const editor = vscode.window.activeTextEditor
 
   if (!editor)
@@ -45,7 +43,7 @@ const insert: RegisterTextEditorCallback = async () => {
 /**
  * comment out all detected `console.log`
  */
-const comment: RegisterTextEditorCallback = async () => {
+async function comment() {
   const editor = vscode.window.activeTextEditor
 
   if (!editor)
@@ -86,7 +84,7 @@ const comment: RegisterTextEditorCallback = async () => {
 /**
  * uncomment out all commented `console.log`
  */
-const uncomment: RegisterTextEditorCallback = async () => {
+async function uncomment() {
   const editor = vscode.window.activeTextEditor
 
   if (!editor)
@@ -121,7 +119,7 @@ const uncomment: RegisterTextEditorCallback = async () => {
 /**
  * delete all `console.log` occurences, wether it's commented or not
  */
-const deleteAll: RegisterTextEditorCallback = async () => {
+async function deleteAll() {
   const editor = vscode.window.activeTextEditor
 
   if (!editor)
@@ -159,18 +157,18 @@ export const commandIds = {
 export const disposables = [
   vscode.commands.registerCommand(
     commandIds.insert,
-    insert,
+    () => insert(),
   ),
   vscode.commands.registerCommand(
     commandIds.comment,
-    comment,
+    () => comment(),
   ),
   vscode.commands.registerCommand(
     commandIds.uncomment,
-    uncomment,
+    () => uncomment(),
   ),
   vscode.commands.registerCommand(
     commandIds.delete,
-    deleteAll,
+    () => deleteAll(),
   ),
 ]

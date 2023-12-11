@@ -413,6 +413,12 @@
         "category": "Veco - Packager",
         "command": "veco.packager.link",
         "icon": "$(link-external)"
+      },
+      {
+        "title": "Remove",
+        "category": "Veco - Packager",
+        "command": "veco.packager.remove",
+        "icon": "$(trash)"
       }
     ],
     "keybindings": [
@@ -479,6 +485,11 @@
         }
       ],
       "view/item/context": [
+        {
+          "command": "veco.packager.remove",
+          "group": "inline",
+          "when": "viewItem == dependencies || viewItem == devDependencies"
+        },
         {
           "command": "veco.packager.link",
           "group": "inline"

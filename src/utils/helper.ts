@@ -152,3 +152,16 @@ export function escapeRegExpGroupsLegacy(str: string) {
 export function escapeRegExp(str: string) {
   return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
 }
+
+/**
+ * Creates/reuse a Terminal with a backing shell process.
+ * The cwd of the terminal will be the workspace directory if it exists.
+ */
+export function executeCommand({ cmd, createNew = true }: { cmd: string, createNew?: boolean }) {
+  let terminal = vscode.window.activeTerminal
+  if (createNew || !terminal)
+    terminal = vscode.window.createTerminal()
+
+  terminal.show()
+  terminal.sendText(cmd)
+}

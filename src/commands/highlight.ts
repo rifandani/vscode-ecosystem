@@ -5,12 +5,10 @@ import { searchAnnotations, showOutputChannel, triggerUpdateHighlight } from '..
 import { diagnostics, state } from '../constants/globals'
 import { configs } from '../constants/config'
 
-type RegisterTextEditorCallback = Parameters<typeof vscode.commands.registerTextEditorCommand>[1]
-
 /**
  * toggle enable/disable highlight
  */
-const toggleEnabled: RegisterTextEditorCallback = async () => {
+async function toggleEnabled() {
   const { config, enabled } = getHighlightConfig()
 
   // passing `true` as third arguments will updates user global settings
@@ -28,7 +26,7 @@ const toggleEnabled: RegisterTextEditorCallback = async () => {
 /**
  * List all user comments/annotations based on the user provided / default settings
  */
-const listAnnotations: RegisterTextEditorCallback = async () => {
+async function listAnnotations() {
   const { keywordsPattern, isCaseSensitive } = getHighlightConfig()
 
   if ((keywordsPattern as string).trim()) {
@@ -68,11 +66,11 @@ export const disposables = [
   diagnostics.highlight,
   vscode.commands.registerCommand(
     commandIds.toggleEnabled,
-    toggleEnabled,
+    () => toggleEnabled(),
   ),
   vscode.commands.registerCommand(
     commandIds.listAnnotations,
-    listAnnotations,
+    () => listAnnotations(),
   ),
   vscode.commands.registerCommand(
     commandIds.showOutputChannel,
