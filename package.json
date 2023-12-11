@@ -407,6 +407,12 @@
         "category": "Veco - Packager",
         "command": "veco.packager.refreshEntry",
         "icon": "$(refresh)"
+      },
+      {
+        "title": "Link",
+        "category": "Veco - Packager",
+        "command": "veco.packager.link",
+        "icon": "$(link-external)"
       }
     ],
     "keybindings": [
@@ -460,8 +466,7 @@
       "veco_packager": [
         {
           "id": "veco_packager.treeDataProvider",
-          "name": "Node Dependencies",
-          "icon": "res/dependency.svg"
+          "name": "Node Dependencies"
         }
       ]
     },
@@ -471,6 +476,12 @@
           "command": "veco.packager.refreshEntry",
           "when": "view == veco_packager.treeDataProvider",
           "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "veco.packager.link",
+          "group": "inline"
         }
       ]
     }
