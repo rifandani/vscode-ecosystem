@@ -91,6 +91,16 @@ export const configs = {
   },
 } as const
 
+export const viewsContainer = {
+  activitybar: {
+    packager: 'veco_packager',
+  },
+} as const
+
+export const views = {
+  veco_packager: 'veco_packager.treeDataProvider',
+} as const
+
 export const highlightDefaultConfig = {
   /**
    * Enable or disable the highlighting

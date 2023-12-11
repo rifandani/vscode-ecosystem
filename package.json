@@ -401,6 +401,12 @@
         "title": "Delete all region marker occurrences across the workspace",
         "category": "Veco - Region",
         "command": "veco.region.deleteAll"
+      },
+      {
+        "title": "Refresh",
+        "category": "Veco - Packager",
+        "command": "veco.packager.refreshEntry",
+        "icon": "$(refresh)"
       }
     ],
     "keybindings": [
@@ -440,7 +446,34 @@
         "key": "ctrl+m ctrl+a",
         "mac": "ctrl+m ctrl+a"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "veco_packager",
+          "title": "Packager",
+          "icon": "$(package)"
+        }
+      ]
+    },
+    "views": {
+      "veco_packager": [
+        {
+          "id": "veco_packager.treeDataProvider",
+          "name": "Node Dependencies",
+          "icon": "res/dependency.svg"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "veco.packager.refreshEntry",
+          "when": "view == veco_packager.treeDataProvider",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
