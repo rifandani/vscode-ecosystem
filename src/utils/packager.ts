@@ -1,17 +1,19 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import vscode from 'vscode'
+import { run } from 'npm-check-updates'
 import type { PackageJson } from 'type-fest'
 import { commandIds } from '../commands/packager'
 import { views } from '../constants/config'
+import { defaultCheckRunOptions } from '../constants/packager'
 import { detectPackageManager, executeCommand } from './helper'
 
-type ContextValue = 'dependencies' | 'devDependencies' | 'nestedDependencies' | 'nestedDevDependencies'
+type ContextValue = 'dependencies' | 'devDependencies'
 
 /**
  * A tree item is an UI element of the tree.
  *
- * - `description` format -> `v1.0.0` or `v1.0.0 (dev)`
+ * - `description` format -> `(dev) ^1.0.0` or `^1.0.0` or `^1.0.0 -> 1.1.0`
  */
 class DependencyTreeItem extends vscode.TreeItem {
   constructor(
@@ -60,23 +62,10 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   }
 
   /**
-   * should be called when there are `element` or we are clicking on the dep item
-   */
-  private getDependenciesView(element: DependencyTreeItem) {
-    // get package.json paths
-    const nodeModulePackageJsonPath = path.join(this.workspaceRoot!, 'node_modules', element.label as string, 'package.json')
-    const packageJsonContent = this.getPackageJsonContent(nodeModulePackageJsonPath)
-
-    const deps = this.getModuleDependencyTrees('nestedDependencies', packageJsonContent.dependencies)
-    const devDeps = this.getModuleDependencyTrees('nestedDevDependencies', packageJsonContent.devDependencies)
-
-    return Promise.resolve(deps.concat(devDeps))
-  }
-
-  /**
    * should be called when there are no `element` or we are on the root view
+   * we need to check for outdated dependencies using `taze`
    */
-  private getRootView() {
+  private async getRootView() {
     // get the root workspace package.json
     const packageJsonPath = path.join(this.workspaceRoot!, 'package.json')
     const packageJsonExists = this.pathExists(packageJsonPath)
@@ -86,43 +75,49 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
       return Promise.resolve([])
     }
 
-    // based on the package.json content, get all dependencies & devDependencies
-    const treeItems = <DependencyTreeItem[]>[]
+    // get original deps versions, and updated deps versions
     const packageJsonContent = this.getPackageJsonContent(packageJsonPath)
+    const updatedDeps = await run({
+      ...defaultCheckRunOptions,
+      cwd: this.workspaceRoot!,
+    }, { cli: false }) as Record<string, string>
 
-    if (packageJsonContent.dependencies) {
-      const deps = this.getModuleDependencyTrees('dependencies', packageJsonContent.dependencies)
-      treeItems.push(...deps)
-    }
-    if (packageJsonContent.devDependencies) {
-      const devDeps = this.getModuleDependencyTrees('devDependencies', packageJsonContent.devDependencies)
-      treeItems.push(...devDeps)
-    }
+    // pass in `updatedDeps` to get informed about the outdated deps
+    const deps = this.getModuleDependencyTrees({ updatedDeps, contextValue: 'dependencies', deps: packageJsonContent.dependencies })
+    const devDeps = this.getModuleDependencyTrees({ updatedDeps, contextValue: 'devDependencies', deps: packageJsonContent.devDependencies })
 
-    return Promise.resolve(treeItems)
+    return Promise.resolve(deps.concat(devDeps))
   }
 
   /**
-   * given the `packageJsonPath`, read the file content and parse it
+   * should be called when there are `element` or we are clicking on the dep item
+   * we does not need to check outdated deps here
    */
-  private getPackageJsonContent(packageJsonPath: string) {
-    const content = fs.readFileSync(packageJsonPath, 'utf-8')
+  private getDependenciesView(element: DependencyTreeItem) {
+    // get package.json paths
+    const nodeModulePackageJsonPath = path.join(this.workspaceRoot!, 'node_modules', element.label as string, 'package.json')
+    const packageJsonContent = this.getPackageJsonContent(nodeModulePackageJsonPath)
 
-    return JSON.parse(content) as PackageJson
+    // get nested module dependencies
+    const deps = this.getModuleDependencyTrees({ contextValue: 'dependencies', deps: packageJsonContent.dependencies })
+    const devDeps = this.getModuleDependencyTrees({ contextValue: 'devDependencies', deps: packageJsonContent.devDependencies })
+
+    return Promise.resolve(deps.concat(devDeps))
   }
 
   /**
    * given the `dependencies` object from `package.json`, then convert it into `DependencyTreeItem`
    */
-  private getModuleDependencyTrees(contextValue: ContextValue, deps: PackageJson['dependencies'] = {}) {
+  private getModuleDependencyTrees({ contextValue, deps = {}, updatedDeps = {} }: { contextValue: ContextValue, deps: PackageJson['dependencies'], updatedDeps?: PackageJson['dependencies'] }) {
     return Object.keys(deps).map((moduleName) => {
       const version = deps[moduleName] as string
       const modulePath = path.join(this.workspaceRoot!, 'node_modules', moduleName)
       const moduleExists = this.pathExists(modulePath)
-      const description
-        = contextValue === 'devDependencies' || contextValue === 'nestedDevDependencies'
-          ? `${version} (dev)`
-          : version
+      let description = contextValue === 'devDependencies' ? `(dev) ${version}` : version
+
+      // inform updated package in description
+      if (Object.hasOwn(updatedDeps, moduleName))
+        description += ` -> ${updatedDeps[moduleName]}`
 
       return new DependencyTreeItem(
         moduleName,
@@ -133,6 +128,15 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
         },
       )
     })
+  }
+
+  /**
+   * given the `packageJsonPath`, read the file content and parse it
+   */
+  private getPackageJsonContent(packageJsonPath: string) {
+    const content = fs.readFileSync(packageJsonPath, 'utf-8')
+
+    return JSON.parse(content) as PackageJson
   }
 
   /**
