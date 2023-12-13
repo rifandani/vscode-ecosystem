@@ -3,25 +3,43 @@ import path from 'node:path'
 import vscode from 'vscode'
 import { run } from 'npm-check-updates'
 import type { PackageJson } from 'type-fest'
-import { commandIds } from '../commands/packager'
-import { views } from '../constants/config'
+import type { PackagerDefaultConfig } from '../constants/config'
 import { defaultCheckRunOptions, defaultUpdateRunOptions } from '../constants/packager'
 import { detectPackageManager, executeCommand } from './helper'
+import { getPackagerConfig } from './config'
 
-type ContextValue =
+type DepType =
   'dependencies' |
   'devDependencies' |
+  'optionalDependencies' |
+  'peerDependencies'
+
+type ContextValue =
+  DepType |
   'updatableDependencies' |
   'updatableDevDependencies' |
+  'updatableOptionalDependencies' |
+  'updatablePeerDependencies' |
   'nestedDependencies' |
-  'nestedDevDependencies'
+  'nestedDevDependencies' |
+  'nestedOptionalDependencies' |
+  'nestedPeerDependencies'
+
+type ModuleType = PackagerDefaultConfig['moduleTypes'][number]
+
+const moduleTypeToDepTypeMapper = {
+  prod: 'dependencies',
+  dev: 'devDependencies',
+  optional: 'optionalDependencies',
+  peer: 'peerDependencies',
+} satisfies Record<ModuleType, DepType>
 
 /**
  * A tree item is an UI element of the tree.
  *
  * - `description` format -> `(dev) ^1.0.0` or `^1.0.0` or `^1.0.0 -> 1.1.0`
  */
-class DependencyTreeItem extends vscode.TreeItem {
+export class DependencyTreeItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
     public readonly collapsibleState: vscode.TreeItemCollapsibleState,
@@ -44,8 +62,9 @@ class DependencyTreeItem extends vscode.TreeItem {
 export class NodeDependenciesProvider implements vscode.TreeDataProvider<DependencyTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<DependencyTreeItem | undefined | null | void>()
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event
-
-  constructor(private workspaceRoot: string | undefined) {}
+  private workspaceRoot = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+    ? vscode.workspace.workspaceFolders[0].uri.fsPath
+    : undefined
 
   getTreeItem(element: DependencyTreeItem) {
     return element
@@ -80,17 +99,17 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     }
 
     // get original deps versions, and updated deps versions
+    const { moduleTypes, versionTarget } = getPackagerConfig()
     const packageJsonContent = this.getPackageJsonContent(packageJsonPath)
     const updatedDeps = await run({
       ...defaultCheckRunOptions,
+      dep: moduleTypes,
+      target: versionTarget,
       cwd: this.workspaceRoot!,
     }, { cli: false }) as Record<string, string>
+    const deps = this.getModuleDependencyTreesBasedOnConfig(packageJsonContent, updatedDeps)
 
-    // pass in `updatedDeps` to get informed about the outdated deps
-    const deps = this.getModuleDependencyTrees({ updatedDeps, contextValue: 'dependencies', deps: packageJsonContent.dependencies })
-    const devDeps = this.getModuleDependencyTrees({ updatedDeps, contextValue: 'devDependencies', deps: packageJsonContent.devDependencies })
-
-    return Promise.resolve(deps.concat(devDeps))
+    return Promise.resolve(deps)
   }
 
   /**
@@ -103,10 +122,33 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     const packageJsonContent = this.getPackageJsonContent(nodeModulePackageJsonPath)
 
     // get nested module dependencies
-    const deps = this.getModuleDependencyTrees({ contextValue: 'nestedDependencies', deps: packageJsonContent.dependencies })
-    const devDeps = this.getModuleDependencyTrees({ contextValue: 'nestedDevDependencies', deps: packageJsonContent.devDependencies })
+    const deps = this.getModuleDependencyTreesBasedOnConfig(packageJsonContent)
 
-    return Promise.resolve(deps.concat(devDeps))
+    return Promise.resolve(deps)
+  }
+
+  /**
+   * given the `packageJsonContent`, construct module dependency tree based on the user config properties
+   *
+   * if `updatedDeps` defined, then it will be root dependencies, otherwise it's nested dependencies
+   */
+  private getModuleDependencyTreesBasedOnConfig(packageJsonContent: PackageJson, updatedDeps?: PackageJson['dependencies']) {
+    const { moduleTypes } = getPackagerConfig()
+    const deps: DependencyTreeItem[] = []
+
+    for (const type of moduleTypes) {
+      const depType = moduleTypeToDepTypeMapper[type]
+      const contextValue = updatedDeps ? depType : `nested${depType.at(0)!.toUpperCase()}${depType.slice(1)}` as ContextValue
+      const dep = this.getModuleDependencyTrees({
+        updatedDeps, // pass in `updatedDeps` to get informed about the outdated deps
+        contextValue,
+        deps: packageJsonContent[depType],
+      })
+
+      deps.push(...dep)
+    }
+
+    return deps
   }
 
   /**
@@ -120,7 +162,11 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
       let description
         = contextValue === 'devDependencies' || contextValue === 'nestedDevDependencies'
           ? `(dev) ${version}`
-          : version
+          : contextValue === 'peerDependencies' || contextValue === 'nestedPeerDependencies'
+            ? `(peer) ${version}`
+            : contextValue === 'optionalDependencies' || contextValue === 'nestedOptionalDependencies'
+              ? `(optional) ${version}`
+              : version
       let newContextValue = contextValue
 
       // if current module is updatable
@@ -128,7 +174,14 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
         // inform updated package in description
         description += ` -> ${updatedDeps[moduleName]}`
         // set `contextValue` as updatable
-        newContextValue = contextValue === 'dependencies' ? 'updatableDependencies' : 'updatableDevDependencies'
+        newContextValue
+          = contextValue === 'dependencies'
+            ? 'updatableDependencies'
+            : contextValue === 'devDependencies'
+              ? 'updatableDevDependencies'
+              : contextValue === 'peerDependencies'
+                ? 'updatablePeerDependencies'
+                : 'updatableOptionalDependencies'
       }
 
       return new DependencyTreeItem(
@@ -280,41 +333,4 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
       })
     }
   }
-}
-
-/**
- * init all commands and register tree data provider
- */
-export function init() {
-  const rootPath = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-    ? vscode.workspace.workspaceFolders[0].uri.fsPath
-    : undefined
-  const nodeDependenciesProvider = new NodeDependenciesProvider(rootPath)
-
-  return [
-    vscode.window.registerTreeDataProvider(
-      views.veco_packager,
-      nodeDependenciesProvider,
-    ),
-    vscode.commands.registerCommand(
-      commandIds.refreshEntry,
-      () => nodeDependenciesProvider.refresh(),
-    ),
-    vscode.commands.registerCommand(
-      commandIds.link,
-      (dep?: DependencyTreeItem) => nodeDependenciesProvider.link(dep),
-    ),
-    vscode.commands.registerCommand(
-      commandIds.remove,
-      (dep?: DependencyTreeItem) => nodeDependenciesProvider.remove(dep),
-    ),
-    vscode.commands.registerCommand(
-      commandIds.updateAll,
-      () => nodeDependenciesProvider.updateAll(),
-    ),
-    vscode.commands.registerCommand(
-      commandIds.updateSingle,
-      (dep?: DependencyTreeItem) => nodeDependenciesProvider.updateSingle(dep),
-    ),
-  ]
 }

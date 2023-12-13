@@ -315,6 +315,29 @@
             "**/.next/**"
           ],
           "description": "Glob pattern that defines files and folders to exclude while listing annotations."
+        },
+        "veco.packager.moduleTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "prod",
+            "dev"
+          ],
+          "description": "Check one or more types of dependencies only. For most cases, you only need \"prod\" and \"dev\", because the more types you include, the more deep the dependencies will be shown"
+        },
+        "veco.packager.versionTarget": {
+          "type": "string",
+          "default": "latest",
+          "enum": [
+            "latest",
+            "newest",
+            "greatest",
+            "minor",
+            "patch"
+          ],
+          "description": "Determines the version to upgrade to."
         }
       }
     },
@@ -505,12 +528,12 @@
         {
           "command": "veco.packager.remove",
           "group": "inline",
-          "when": "viewItem == dependencies || viewItem == devDependencies || viewItem == updatableDependencies || viewItem == updatableDevDependencies"
+          "when": "viewItem == dependencies || viewItem == devDependencies || viewItem == peerDependencies || viewItem == optionalDependencies || viewItem == updatableDependencies || viewItem == updatableDevDependencies || viewItem == updatablePeerDependencies || viewItem == updatableOptionalDependencies"
         },
         {
           "command": "veco.packager.updateSingle",
           "group": "inline",
-          "when": "viewItem == updatableDependencies || viewItem == updatableDevDependencies"
+          "when": "viewItem == updatableDependencies || viewItem == updatableDevDependencies || viewItem == updatablePeerDependencies || viewItem == updatableOptionalDependencies"
         },
         {
           "command": "veco.packager.link",

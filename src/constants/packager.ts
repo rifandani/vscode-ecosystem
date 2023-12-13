@@ -1,8 +1,9 @@
 import type { RunOptions } from 'npm-check-updates'
+import { packagerDefaultConfig } from './config'
 
 export const defaultCheckRunOptions: RunOptions = {
-  dep: ['prod', 'dev'], // only "dependencies" and "devDependencies"
-  target: 'latest', // could be overridden with config properties
+  dep: packagerDefaultConfig.moduleTypes,
+  target: packagerDefaultConfig.versionTarget,
   install: 'never',
   concurrency: 16,
   cache: false, // do not use cache
