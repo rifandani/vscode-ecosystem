@@ -2,7 +2,7 @@ import type { RunOptions } from 'npm-check-updates'
 
 export const defaultCheckRunOptions: RunOptions = {
   dep: ['prod', 'dev'], // only "dependencies" and "devDependencies"
-  target: 'semver', // could be overridden with config properties
+  target: 'latest', // could be overridden with config properties
   install: 'never',
   concurrency: 16,
   cache: false, // do not use cache

@@ -3,4 +3,5 @@ export const commandIds = {
   link: 'veco.packager.link',
   remove: 'veco.packager.remove',
   updateAll: 'veco.packager.updateAll',
+  updateSingle: 'veco.packager.updateSingle',
 } as const

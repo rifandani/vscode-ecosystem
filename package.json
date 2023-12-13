@@ -424,7 +424,13 @@
         "title": "Update All Dependencies",
         "category": "Veco - Packager",
         "command": "veco.packager.updateAll",
-        "icon": "$(zap)"
+        "icon": "$(fold-up)"
+      },
+      {
+        "title": "Update Dependency",
+        "category": "Veco - Packager",
+        "command": "veco.packager.updateSingle",
+        "icon": "$(chevron-up)"
       }
     ],
     "keybindings": [
@@ -499,7 +505,12 @@
         {
           "command": "veco.packager.remove",
           "group": "inline",
-          "when": "viewItem == dependencies || viewItem == devDependencies"
+          "when": "viewItem == dependencies || viewItem == devDependencies || viewItem == updatableDependencies || viewItem == updatableDevDependencies"
+        },
+        {
+          "command": "veco.packager.updateSingle",
+          "group": "inline",
+          "when": "viewItem == updatableDependencies || viewItem == updatableDevDependencies"
         },
         {
           "command": "veco.packager.link",
