@@ -348,7 +348,7 @@
         "command": "veco.highlight.listAnnotations"
       },
       {
-        "title": "Show output channel",
+        "title": "Show highlight output channel",
         "category": "Veco - Highlight",
         "command": "veco.highlight.showOutputChannel"
       },
@@ -393,32 +393,38 @@
         "command": "veco.region.mark"
       },
       {
-        "title": "Delete all region marker occurrences in the current document",
+        "title": "Delete all region markers in the current document",
         "category": "Veco - Region",
         "command": "veco.region.delete"
       },
       {
-        "title": "Delete all region marker occurrences across the workspace",
+        "title": "Delete all region markers across workspace",
         "category": "Veco - Region",
         "command": "veco.region.deleteAll"
       },
       {
-        "title": "Refresh",
+        "title": "Refresh Dependencies List",
         "category": "Veco - Packager",
         "command": "veco.packager.refreshEntry",
         "icon": "$(refresh)"
       },
       {
-        "title": "Link",
+        "title": "Link Dependency to NPM Website",
         "category": "Veco - Packager",
         "command": "veco.packager.link",
         "icon": "$(link-external)"
       },
       {
-        "title": "Remove",
+        "title": "Remove Dependency",
         "category": "Veco - Packager",
         "command": "veco.packager.remove",
         "icon": "$(trash)"
+      },
+      {
+        "title": "Update All Dependencies",
+        "category": "Veco - Packager",
+        "command": "veco.packager.updateAll",
+        "icon": "$(zap)"
       }
     ],
     "keybindings": [
@@ -472,7 +478,7 @@
       "veco_packager": [
         {
           "id": "veco_packager.treeDataProvider",
-          "name": "Node Dependencies"
+          "name": "Dependencies"
         }
       ]
     },
@@ -480,6 +486,11 @@
       "view/title": [
         {
           "command": "veco.packager.refreshEntry",
+          "when": "view == veco_packager.treeDataProvider",
+          "group": "navigation"
+        },
+        {
+          "command": "veco.packager.updateAll",
           "when": "view == veco_packager.treeDataProvider",
           "group": "navigation"
         }
