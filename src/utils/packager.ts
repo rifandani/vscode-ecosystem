@@ -8,7 +8,13 @@ import { views } from '../constants/config'
 import { defaultCheckRunOptions, defaultUpdateRunOptions } from '../constants/packager'
 import { detectPackageManager, executeCommand } from './helper'
 
-type ContextValue = 'dependencies' | 'devDependencies' | 'nestedDependencies' | 'nestedDevDependencies'
+type ContextValue =
+  'dependencies' |
+  'devDependencies' |
+  'updatableDependencies' |
+  'updatableDevDependencies' |
+  'nestedDependencies' |
+  'nestedDevDependencies'
 
 /**
  * A tree item is an UI element of the tree.
@@ -115,17 +121,22 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
         = contextValue === 'devDependencies' || contextValue === 'nestedDevDependencies'
           ? `(dev) ${version}`
           : version
+      let newContextValue = contextValue
 
-      // inform updated package in description
-      if (Object.hasOwn(updatedDeps, moduleName))
+      // if current module is updatable
+      if (Object.hasOwn(updatedDeps, moduleName)) {
+        // inform updated package in description
         description += ` -> ${updatedDeps[moduleName]}`
+        // set `contextValue` as updatable
+        newContextValue = contextValue === 'dependencies' ? 'updatableDependencies' : 'updatableDevDependencies'
+      }
 
       return new DependencyTreeItem(
         moduleName,
         moduleExists ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
         {
-          contextValue,
           description,
+          contextValue: newContextValue,
         },
       )
     })
@@ -233,6 +244,42 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
       this.refresh()
     })
   }
+
+  /**
+   * update single outdated root dependencies
+   */
+  public async updateSingle(dep?: DependencyTreeItem) {
+    if (!dep) {
+      vscode.window.showInformationMessage('This command can not be invoked directly')
+      return
+    }
+
+    // make sure the dependencies is updatable
+    if ((dep.contextValue as ContextValue) === 'updatableDependencies' || (dep.contextValue as ContextValue) === 'updatableDevDependencies') {
+      const updatedVersion = (dep.description as string).split('->').at(-1)
+
+      await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: `Updating ${dep.label} to${updatedVersion}`,
+        cancellable: false,
+      }, async (progress) => {
+        progress.report({ increment: 0, message: 'Starting updates...' })
+
+        // upgrade the dep version in package.json, and install it
+        await run({
+          ...defaultUpdateRunOptions,
+          cwd: this.workspaceRoot!,
+          filter: dep.label, // only updates the selected dep
+        }, { cli: false }) as Record<string, string>
+
+        // Show an information message
+        vscode.window.showInformationMessage('Dependency updated!')
+
+        // refresh deps list
+        this.refresh()
+      })
+    }
+  }
 }
 
 /**
@@ -264,6 +311,10 @@ export function init() {
     vscode.commands.registerCommand(
       commandIds.updateAll,
       () => nodeDependenciesProvider.updateAll(),
+    ),
+    vscode.commands.registerCommand(
+      commandIds.updateSingle,
+      (dep?: DependencyTreeItem) => nodeDependenciesProvider.updateSingle(dep),
     ),
   ]
 }
