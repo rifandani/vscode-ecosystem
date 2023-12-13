@@ -4,17 +4,20 @@ import { disposables as fileNestingDisposables } from './commands/file-nesting'
 import { disposables as colorizeDisposables } from './commands/colorize'
 import { disposables as loggerDisposables } from './commands/logger'
 import { disposables as regionDisposables } from './commands/region'
+import { initCommands as initPackagerCommands } from './commands/packager'
 import { handleChangeConfiguration as handleChangeConfigurationHighlight, init as initHighlight, triggerUpdateHighlight } from './utils/highlight'
 import { handleChangeConfiguration as handleChangeConfigurationColorize, triggerUpdateColorize } from './utils/colorize'
-import { init as initPackager } from './utils/packager'
+import { NodeDependenciesProvider } from './utils/packager'
 import { defaultState, diagnostics, state } from './constants/globals'
+import { configs } from './constants/config'
 
 export async function activate(context: vscode.ExtensionContext) {
   // initialize all necessary things for "highlight"
   initHighlight()
 
   // initialize all necessary things for "packager"
-  const packagerDisposables = initPackager()
+  const nodeDependenciesProvider = new NodeDependenciesProvider()
+  const packagerDisposables = initPackagerCommands(nodeDependenciesProvider)
 
   // trigger update "highlight" & "colorize" for the first time
   if (vscode.window.activeTextEditor) {
@@ -47,6 +50,9 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration((event) => {
       handleChangeConfigurationHighlight(event)
       handleChangeConfigurationColorize(event)
+      // do not bother to refresh the deps list, if the packager config does not changed
+      if (event.affectsConfiguration(configs.packager.root))
+        nodeDependenciesProvider.refresh()
     }),
   ]
 

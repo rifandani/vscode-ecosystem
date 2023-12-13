@@ -45,6 +45,16 @@ export interface ColorizeDefaultConfig {
     | 'dot-before'
     | 'dot-after'
 }
+
+export interface PackagerDefaultConfig {
+  moduleTypes: ('prod' | 'dev' | 'optional' | 'peer')[]
+  versionTarget:
+    | 'latest'
+    | 'newest'
+    | 'greatest'
+    | 'minor'
+    | 'patch'
+}
 // #endregion
 
 // #region CONSTANTS
@@ -88,6 +98,11 @@ export const configs = {
     include: 'include',
     exclude: 'exclude',
     decorationType: 'decorationType',
+  },
+  packager: {
+    root: 'veco.packager',
+    moduleTypes: 'moduleTypes',
+    versionTarget: 'versionTarget',
   },
 } as const
 
@@ -350,4 +365,26 @@ export const colorizeDefaultConfig = {
     '**/.next/**',
   ],
 } satisfies ColorizeDefaultConfig
+
+export const packagerDefaultConfig = {
+  /**
+   * Check one or more types of dependencies only
+   *
+   * - "prod": refers to "dependencies" in package.json
+   * - "dev": refers to "devDependencies" in package.json
+   * - "optional": refers to "optionalDependencies" in package.json
+   * - "peer": refers to "peerDependencies" in package.json
+   */
+  moduleTypes: ['prod', 'dev'],
+  /**
+   * Determines the version to upgrade to
+   *
+   * - "latest": Upgrade to whatever the package's "latest" git tag points to. Excludes prereleases.
+   * - "newest": Upgrade to the version with the most recent publish date, even if there are other version numbers that are higher. Includes prereleases.
+   * - "greatest": Upgrade to the highest version number published, regardless of release date or tag.
+   * - "minor": Upgrade to the highest minor version without bumping the major version.
+   * - "patch": Upgrade to the highest patch version without bumping the minor or major versions.
+   */
+  versionTarget: 'latest',
+} satisfies PackagerDefaultConfig
 // #endregion
