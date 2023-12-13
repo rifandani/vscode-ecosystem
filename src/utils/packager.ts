@@ -5,10 +5,10 @@ import { run } from 'npm-check-updates'
 import type { PackageJson } from 'type-fest'
 import { commandIds } from '../commands/packager'
 import { views } from '../constants/config'
-import { defaultCheckRunOptions } from '../constants/packager'
+import { defaultCheckRunOptions, defaultUpdateRunOptions } from '../constants/packager'
 import { detectPackageManager, executeCommand } from './helper'
 
-type ContextValue = 'dependencies' | 'devDependencies'
+type ContextValue = 'dependencies' | 'devDependencies' | 'nestedDependencies' | 'nestedDevDependencies'
 
 /**
  * A tree item is an UI element of the tree.
@@ -22,14 +22,12 @@ class DependencyTreeItem extends vscode.TreeItem {
     public readonly options?: {
       readonly contextValue?: ContextValue
       readonly description?: string
-      readonly command?: vscode.Command
     },
   ) {
     super(label, collapsibleState)
 
     this.contextValue = options?.contextValue
     this.description = options?.description
-    this.command = options?.command
     this.iconPath = {
       light: path.join(__filename, '..', '..', 'res', 'light', 'type-hierarchy-sub.svg'),
       dark: path.join(__filename, '..', '..', 'res', 'dark', 'type-hierarchy-sub.svg'),
@@ -99,8 +97,8 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     const packageJsonContent = this.getPackageJsonContent(nodeModulePackageJsonPath)
 
     // get nested module dependencies
-    const deps = this.getModuleDependencyTrees({ contextValue: 'dependencies', deps: packageJsonContent.dependencies })
-    const devDeps = this.getModuleDependencyTrees({ contextValue: 'devDependencies', deps: packageJsonContent.devDependencies })
+    const deps = this.getModuleDependencyTrees({ contextValue: 'nestedDependencies', deps: packageJsonContent.dependencies })
+    const devDeps = this.getModuleDependencyTrees({ contextValue: 'nestedDevDependencies', deps: packageJsonContent.devDependencies })
 
     return Promise.resolve(deps.concat(devDeps))
   }
@@ -113,7 +111,10 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
       const version = deps[moduleName] as string
       const modulePath = path.join(this.workspaceRoot!, 'node_modules', moduleName)
       const moduleExists = this.pathExists(modulePath)
-      let description = contextValue === 'devDependencies' ? `(dev) ${version}` : version
+      let description
+        = contextValue === 'devDependencies' || contextValue === 'nestedDevDependencies'
+          ? `(dev) ${version}`
+          : version
 
       // inform updated package in description
       if (Object.hasOwn(updatedDeps, moduleName))
@@ -163,7 +164,12 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   /**
    * open/link the selected dependency to the external NPM website documentation
    */
-  public async link(dep: DependencyTreeItem) {
+  public async link(dep?: DependencyTreeItem) {
+    if (!dep) {
+      vscode.window.showInformationMessage('This command can not be invoked directly')
+      return
+    }
+
     const url = `https://www.npmjs.com/package/${dep.label}`
     const parsedUrl = vscode.Uri.parse(url)
 
@@ -175,7 +181,12 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
    *
    * NOTE: should only run if the selected dependency is the root "dependencies" / "devDependencies"
    */
-  public async remove(dep: DependencyTreeItem) {
+  public async remove(dep?: DependencyTreeItem) {
+    if (!dep) {
+      vscode.window.showInformationMessage('This command can not be invoked directly')
+      return
+    }
+
     let cmd = ''
     const packageManager = await detectPackageManager()
 
@@ -196,6 +207,31 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
 
     executeCommand({ cmd })
     this.refresh()
+  }
+
+  /**
+   * update all outdated root dependencies
+   */
+  public async updateAll() {
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: 'Updating outdated dependencies',
+      cancellable: false,
+    }, async (progress) => {
+      progress.report({ increment: 0, message: 'Starting updates...' })
+
+      // check outdated deps, upgrade the version in package.json, and install it
+      await run({
+        ...defaultUpdateRunOptions,
+        cwd: this.workspaceRoot!,
+      }, { cli: false }) as Record<string, string>
+
+      // Show an information message
+      vscode.window.showInformationMessage('All outdated dependencies updated!')
+
+      // refresh deps list
+      this.refresh()
+    })
   }
 }
 
@@ -219,11 +255,15 @@ export function init() {
     ),
     vscode.commands.registerCommand(
       commandIds.link,
-      (dep: DependencyTreeItem) => nodeDependenciesProvider.link(dep),
+      (dep?: DependencyTreeItem) => nodeDependenciesProvider.link(dep),
     ),
     vscode.commands.registerCommand(
       commandIds.remove,
-      (dep: DependencyTreeItem) => nodeDependenciesProvider.remove(dep),
+      (dep?: DependencyTreeItem) => nodeDependenciesProvider.remove(dep),
+    ),
+    vscode.commands.registerCommand(
+      commandIds.updateAll,
+      () => nodeDependenciesProvider.updateAll(),
     ),
   ]
 }
