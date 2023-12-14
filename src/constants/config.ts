@@ -49,6 +49,7 @@ export interface ColorizeDefaultConfig {
 export interface PackagerDefaultConfig {
   moduleTypes: ('prod' | 'dev' | 'optional' | 'peer')[]
   versionTarget:
+    | 'semver'
     | 'latest'
     | 'newest'
     | 'greatest'
@@ -379,12 +380,13 @@ export const packagerDefaultConfig = {
   /**
    * Determines the version to upgrade to
    *
+   * - "semver": Upgrade to the highest version within the semver range specified in your package.json
    * - "latest": Upgrade to whatever the package's "latest" git tag points to. Excludes prereleases.
    * - "newest": Upgrade to the version with the most recent publish date, even if there are other version numbers that are higher. Includes prereleases.
    * - "greatest": Upgrade to the highest version number published, regardless of release date or tag.
    * - "minor": Upgrade to the highest minor version without bumping the major version.
    * - "patch": Upgrade to the highest patch version without bumping the minor or major versions.
    */
-  versionTarget: 'latest',
+  versionTarget: 'semver',
 } satisfies PackagerDefaultConfig
 // #endregion
