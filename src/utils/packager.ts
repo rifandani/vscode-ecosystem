@@ -311,26 +311,18 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     if ((dep.contextValue as ContextValue) === 'updatableDependencies' || (dep.contextValue as ContextValue) === 'updatableDevDependencies') {
       const updatedVersion = (dep.description as string).split('->').at(-1)
 
-      await vscode.window.withProgress({
-        location: vscode.ProgressLocation.Notification,
-        title: `Updating ${dep.label} to${updatedVersion}`,
-        cancellable: false,
-      }, async (progress) => {
-        progress.report({ increment: 0, message: 'Starting updates...' })
+      // upgrade the dep version in package.json, and install it
+      await run({
+        ...defaultUpdateRunOptions,
+        cwd: this.workspaceRoot!,
+        filter: dep.label, // only updates the selected dep
+      }, { cli: false }) as Record<string, string>
 
-        // upgrade the dep version in package.json, and install it
-        await run({
-          ...defaultUpdateRunOptions,
-          cwd: this.workspaceRoot!,
-          filter: dep.label, // only updates the selected dep
-        }, { cli: false }) as Record<string, string>
+      // Show an information message
+      vscode.window.showInformationMessage(`${dep.label} updated to${updatedVersion}`)
 
-        // Show an information message
-        vscode.window.showInformationMessage('Dependency updated!')
-
-        // refresh deps list
-        this.refresh()
-      })
+      // refresh deps list
+      this.refresh()
     }
   }
 }
