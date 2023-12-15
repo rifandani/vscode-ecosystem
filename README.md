@@ -44,6 +44,7 @@ Check the full details in [logger docs](./src/docs/logger.md)
 
 6. ***Region***
 
+
 Automatic code region markers, and delete markers easily in your editor/workspace.
 
 Check the full details in [region docs](./src/docs/region.md)
@@ -53,6 +54,14 @@ Check the full details in [region docs](./src/docs/region.md)
 View, add, update, and delete your Javascript dependencies easily.
 
 Check the full details in [packager docs](./src/docs/packager.md)
+
+8. ***Deliner***
+
+Do you have a lot of `eslint-disable`, `@ts-ignore`, `@ts-expect-error`, `@ts-nocheck`, `istanbul ignore next`, etc..., but when you try to delete it using vscode built-in search and replace, it only deletes the text, and not the entire line?
+
+This extension will instead deletes the line, instead of the text only. This will make your code cleaner without any unnecessary comments.
+
+Check the full details in [deliner docs](./src/docs/deliner.md)
 
 ## Issues and Roadmap
 

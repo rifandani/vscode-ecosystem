@@ -455,6 +455,12 @@
         "category": "Veco - Packager",
         "command": "veco.packager.updateSingle",
         "icon": "$(chevron-up)"
+      },
+      {
+        "title": "Delete all lines given by the input",
+        "category": "Veco - Deliner",
+        "command": "veco.deliner.deleteAll",
+        "icon": "$(trash)"
       }
     ],
     "keybindings": [
