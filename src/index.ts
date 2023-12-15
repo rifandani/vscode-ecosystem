@@ -5,6 +5,7 @@ import { disposables as colorizeDisposables } from './commands/colorize'
 import { disposables as loggerDisposables } from './commands/logger'
 import { disposables as regionDisposables } from './commands/region'
 import { initCommands as initPackagerCommands } from './commands/packager'
+import { disposables as delinerDisposables } from './commands/deliner'
 import { handleChangeConfiguration as handleChangeConfigurationHighlight, init as initHighlight, triggerUpdateHighlight } from './utils/highlight'
 import { handleChangeConfiguration as handleChangeConfigurationColorize, triggerUpdateColorize } from './utils/colorize'
 import { NodeDependenciesProvider } from './utils/packager'
@@ -63,6 +64,7 @@ export async function activate(context: vscode.ExtensionContext) {
     ...loggerDisposables,
     ...regionDisposables,
     ...packagerDisposables,
+    ...delinerDisposables,
     ...listenerDisposables,
   ]
 
