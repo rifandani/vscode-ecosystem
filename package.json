@@ -555,7 +555,8 @@
         },
         {
           "command": "veco.packager.link",
-          "group": "inline"
+          "group": "inline",
+          "when": "view == veco_packager.treeDataProvider"
         }
       ]
     }
