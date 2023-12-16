@@ -3,7 +3,7 @@ import path from 'node:path'
 import vscode from 'vscode'
 import { run } from 'npm-check-updates'
 import type { PackageJson } from 'type-fest'
-import type { PackagerDefaultConfig } from '../constants/config'
+import { type PackagerDefaultConfig, configs } from '../constants/config'
 import { defaultCheckRunOptions, defaultUpdateRunOptions } from '../constants/packager'
 import { detectPackageManager, executeCommand } from './helper'
 import { getPackagerConfig } from './config'
@@ -325,4 +325,13 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
       this.refresh()
     }
   }
+}
+
+/**
+ * handle vscode `onDidChangeConfiguration` for packager config
+ */
+export function handleChangeConfiguration(event: vscode.ConfigurationChangeEvent, nodeDependenciesProvider: NodeDependenciesProvider) {
+  // do not bother to refresh the deps list, if the packager config does not changed
+  if (event.affectsConfiguration(configs.packager.root))
+    nodeDependenciesProvider.refresh()
 }

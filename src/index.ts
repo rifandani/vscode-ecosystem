@@ -8,9 +8,8 @@ import { initCommands as initPackagerCommands } from './commands/packager'
 import { disposables as delinerDisposables } from './commands/deliner'
 import { handleChangeConfiguration as handleChangeConfigurationHighlight, init as initHighlight, triggerUpdateHighlight } from './utils/highlight'
 import { handleChangeConfiguration as handleChangeConfigurationColorize, triggerUpdateColorize } from './utils/colorize'
-import { NodeDependenciesProvider } from './utils/packager'
+import { NodeDependenciesProvider, handleChangeConfiguration as handleChangeConfigurationPackager } from './utils/packager'
 import { defaultState, diagnostics, state } from './constants/globals'
-import { configs } from './constants/config'
 
 export async function activate(context: vscode.ExtensionContext) {
   // initialize all necessary things for "highlight"
@@ -51,9 +50,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration((event) => {
       handleChangeConfigurationHighlight(event)
       handleChangeConfigurationColorize(event)
-      // do not bother to refresh the deps list, if the packager config does not changed
-      if (event.affectsConfiguration(configs.packager.root))
-        nodeDependenciesProvider.refresh()
+      handleChangeConfigurationPackager(event, nodeDependenciesProvider)
     }),
   ]
 

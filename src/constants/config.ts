@@ -56,6 +56,11 @@ export interface PackagerDefaultConfig {
     | 'minor'
     | 'patch'
 }
+
+export interface DelinerDefaultConfig {
+  include: string
+  exclude: string
+}
 // #endregion
 
 // #region CONSTANTS
@@ -104,6 +109,11 @@ export const configs = {
     root: 'veco.packager',
     moduleTypes: 'moduleTypes',
     versionTarget: 'versionTarget',
+  },
+  deliner: {
+    root: 'veco.deliner',
+    include: 'include',
+    exclude: 'exclude',
   },
 } as const
 
@@ -196,10 +206,17 @@ export const highlightDefaultConfig = {
     '**/*.jsx',
     '**/*.ts',
     '**/*.tsx',
+    '**/*.vue',
+    '**/*.svelte',
+    '**/*.astro',
     '**/*.html',
     '**/*.php',
     '**/*.css',
     '**/*.scss',
+    '**/*.less',
+    '**/*.md',
+    '**/*.mdx',
+    '**/*.json',
   ],
   /**
    * Glob pattern that defines files and folders to exclude while listing annotations.
@@ -210,14 +227,20 @@ export const highlightDefaultConfig = {
    */
   exclude: [
     '**/node_modules/**',
-    '**/dist/**',
     '**/bower_components/**',
+    '**/dev-dist/**',
+    '**/dist/**',
     '**/build/**',
+    '**/html/**',
+    '**/coverage/**',
+    '**/out/**',
     '**/.vscode/**',
+    '**/.vscode-test/**',
     '**/.github/**',
     '**/_output/**',
     '**/*.min.*',
     '**/*.map',
+    '**/.next/**',
   ],
 } satisfies HighlightDefaultConfig
 
@@ -389,4 +412,15 @@ export const packagerDefaultConfig = {
    */
   versionTarget: 'semver',
 } satisfies PackagerDefaultConfig
+
+export const delinerDefaultConfig = {
+  /**
+   * Glob patterns that defines the files to search for.
+   */
+  include: '**/*.*',
+  /**
+   * Glob pattern that defines files and folders to exclude.
+   */
+  exclude: '**/{node_modules,bower_components,dev-dist,dist,build,html,coverage,out,.vscode,.vscode-test,.github,_output,.next}/**',
+} satisfies DelinerDefaultConfig
 // #endregion
