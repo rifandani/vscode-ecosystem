@@ -213,6 +213,7 @@
             "**/*.svelte",
             "**/*.astro",
             "**/*.html",
+            "**/*.php",
             "**/*.css",
             "**/*.scss",
             "**/*.less",
@@ -339,6 +340,16 @@
             "patch"
           ],
           "description": "Determines the version to upgrade to."
+        },
+        "veco.deliner.include": {
+          "type": "string",
+          "default": "**/*.*",
+          "description": "Glob patterns that defines the files and folders to include in the search"
+        },
+        "veco.deliner.exclude": {
+          "type": "string",
+          "default": "**/{node_modules,bower_components,dev-dist,dist,build,html,coverage,out,.vscode,.vscode-test,.github,_output,.next}/**",
+          "description": "Glob patterns that defines the files and folders to exclude"
         }
       }
     },

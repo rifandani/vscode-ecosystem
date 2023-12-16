@@ -1,6 +1,6 @@
 import { Buffer } from 'node:buffer'
 import vscode from 'vscode'
-import { excludedFiles } from '../utils/region'
+import { getDelinerConfig } from '../utils/config'
 
 /**
  * given the string input, delete all lines matches with the input across the workspace
@@ -14,6 +14,8 @@ async function deleteAllAcrossWorkspace() {
   if (!inputText)
     return
 
+  const { include, exclude } = getDelinerConfig()
+
   await vscode.window.withProgress({
     location: vscode.ProgressLocation.Notification,
     title: `Deleting all ${inputText} occurrences`,
@@ -22,7 +24,7 @@ async function deleteAllAcrossWorkspace() {
     progress.report({ increment: 0, message: 'Starting deletion...' })
 
     // find all supported file types
-    const files = await vscode.workspace.findFiles('**/*.*', excludedFiles)
+    const files = await vscode.workspace.findFiles(include, exclude)
     const totalFiles = files.length
 
     const promises = files.map(async (file, idx) => {

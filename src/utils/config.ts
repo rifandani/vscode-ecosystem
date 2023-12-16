@@ -1,22 +1,22 @@
 import vscode from 'vscode'
-import type { ColorizeDefaultConfig, FileNestingDefaultConfig, HighlightDefaultConfig, PackagerDefaultConfig } from '../constants/config'
-import { colorizeDefaultConfig, configs, highlightDefaultConfig, packagerDefaultConfig } from '../constants/config'
+import type { ColorizeDefaultConfig, DelinerDefaultConfig, FileNestingDefaultConfig, HighlightDefaultConfig, PackagerDefaultConfig } from '../constants/config'
+import { configs } from '../constants/config'
 
 /**
  * get user defined "veco.highlight" extension config (with default values)
  */
 export function getHighlightConfig() {
   const config = vscode.workspace.getConfiguration(configs.highlight.root)
-  const enabled = config.get<boolean>(configs.highlight.enabled, highlightDefaultConfig.enabled)
-  const toggleURI = config.get<boolean>(configs.highlight.toggleURI, highlightDefaultConfig.toggleURI)
-  const isCaseSensitive = config.get<boolean>(configs.highlight.isCaseSensitive, highlightDefaultConfig.isCaseSensitive)
-  const enableDiagnostics = config.get<boolean>(configs.highlight.enableDiagnostics, highlightDefaultConfig.enableDiagnostics)
-  const maxFilesForSearch = config.get(configs.highlight.maxFilesForSearch, highlightDefaultConfig.maxFilesForSearch)
-  const keywords = config.get(configs.highlight.keywords, highlightDefaultConfig.keywords) as HighlightDefaultConfig['keywords']
-  const keywordsPattern = config.get(configs.highlight.keywordsPattern, highlightDefaultConfig.keywordsPattern) as HighlightDefaultConfig['keywordsPattern']
-  const defaultStyle = config.get(configs.highlight.defaultStyle, highlightDefaultConfig.defaultStyle) as HighlightDefaultConfig['defaultStyle']
-  const include = config.get(configs.highlight.include, highlightDefaultConfig.include)
-  const exclude = config.get(configs.highlight.exclude, highlightDefaultConfig.exclude)
+  const enabled = config.get(configs.highlight.enabled) as boolean
+  const toggleURI = config.get(configs.highlight.toggleURI) as boolean
+  const isCaseSensitive = config.get(configs.highlight.isCaseSensitive) as boolean
+  const enableDiagnostics = config.get(configs.highlight.enableDiagnostics) as boolean
+  const maxFilesForSearch = config.get(configs.highlight.maxFilesForSearch) as number
+  const keywords = config.get(configs.highlight.keywords) as HighlightDefaultConfig['keywords']
+  const keywordsPattern = config.get(configs.highlight.keywordsPattern) as HighlightDefaultConfig['keywordsPattern']
+  const defaultStyle = config.get(configs.highlight.defaultStyle) as HighlightDefaultConfig['defaultStyle']
+  const include = config.get(configs.highlight.include) as string[]
+  const exclude = config.get(configs.highlight.exclude) as string[]
 
   return {
     config,
@@ -38,9 +38,9 @@ export function getHighlightConfig() {
  */
 export function getFileNestingConfig() {
   const config = vscode.workspace.getConfiguration(configs.fileNesting.root)
-  const enabled = config.get<FileNestingDefaultConfig['enabled']>(configs.fileNesting.enabled)
-  const expand = config.get<FileNestingDefaultConfig['expand']>(configs.fileNesting.expand) // this is not used in the codebase, maybe we can delete this
-  const patterns = config.get<FileNestingDefaultConfig['patterns']>(configs.fileNesting.patterns) // this is not used in the codebase, maybe we can delete this
+  const enabled = config.get(configs.fileNesting.enabled) as FileNestingDefaultConfig['enabled']
+  const expand = config.get(configs.fileNesting.expand) as FileNestingDefaultConfig['expand']
+  const patterns = config.get(configs.fileNesting.patterns) as FileNestingDefaultConfig['patterns']
 
   return {
     config,
@@ -55,11 +55,11 @@ export function getFileNestingConfig() {
  */
 export function getColorizeConfig() {
   const config = vscode.workspace.getConfiguration(configs.colorize.root)
-  const enabled = config.get<ColorizeDefaultConfig['enabled']>(configs.colorize.enabled)
-  const namedColor = config.get<ColorizeDefaultConfig['namedColor']>(configs.colorize.namedColor)
-  const decorationType = config.get<ColorizeDefaultConfig['decorationType']>(configs.colorize.decorationType)
-  const include = config.get(configs.colorize.include, colorizeDefaultConfig.include)
-  const exclude = config.get(configs.colorize.exclude, colorizeDefaultConfig.exclude)
+  const enabled = config.get(configs.colorize.enabled) as ColorizeDefaultConfig['enabled']
+  const namedColor = config.get(configs.colorize.namedColor) as ColorizeDefaultConfig['namedColor']
+  const decorationType = config.get(configs.colorize.decorationType) as ColorizeDefaultConfig['decorationType']
+  const include = config.get(configs.colorize.include) as ColorizeDefaultConfig['include']
+  const exclude = config.get(configs.colorize.exclude) as ColorizeDefaultConfig['exclude']
 
   return {
     config,
@@ -76,12 +76,27 @@ export function getColorizeConfig() {
  */
 export function getPackagerConfig() {
   const config = vscode.workspace.getConfiguration(configs.packager.root)
-  const moduleTypes = config.get<PackagerDefaultConfig['moduleTypes']>(configs.packager.moduleTypes, packagerDefaultConfig.moduleTypes)
-  const versionTarget = config.get<PackagerDefaultConfig['versionTarget']>(configs.packager.versionTarget, packagerDefaultConfig.versionTarget)
+  const moduleTypes = config.get(configs.packager.moduleTypes) as PackagerDefaultConfig['moduleTypes']
+  const versionTarget = config.get(configs.packager.versionTarget) as PackagerDefaultConfig['versionTarget']
 
   return {
     config,
     moduleTypes,
     versionTarget,
+  }
+}
+
+/**
+ * get user defined "veco.deliner" extension config
+ */
+export function getDelinerConfig() {
+  const config = vscode.workspace.getConfiguration(configs.deliner.root)
+  const include = config.get(configs.deliner.include) as DelinerDefaultConfig['include']
+  const exclude = config.get(configs.deliner.exclude) as DelinerDefaultConfig['exclude']
+
+  return {
+    config,
+    include,
+    exclude,
   }
 }
