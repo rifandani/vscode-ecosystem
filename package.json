@@ -2,7 +2,7 @@
   "publisher": "rifandani",
   "name": "vscode-ecosystem",
   "displayName": "Vscode Ecosystem",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "packageManager": "pnpm@8.11.0",
   "description": "My personal Vscode extensions mainly for frontend development",
   "author": "Tri Rizeki Rifandani <tri.rifandani@gmail.com>",
