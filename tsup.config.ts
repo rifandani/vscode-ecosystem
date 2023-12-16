@@ -8,7 +8,7 @@ export default defineConfig({
   shims: false,
   dts: false,
   sourcemap: true,
-  target: 'node18',
+  target: 'node16',
   external: [
     'vscode',
   ],
