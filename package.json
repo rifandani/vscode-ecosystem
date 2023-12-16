@@ -568,10 +568,12 @@
     "test": "vitest",
     "dev": "nr build --watch",
     "build": "tsup src/index.ts --external vscode",
-    "pack": "vsce package --no-dependencies",
-    "publish": "vsce publish --no-dependencies",
+    "vscode:package": "vsce package --no-dependencies",
     "vscode:prepublish": "nr build",
-    "release": "bumpp && nr publish"
+    "vscode:publish": "vsce publish --no-dependencies",
+    "npm:pack": "npm pack",
+    "npm:publish": "npm publish",
+    "release": "bumpp && nr vscode:publish && nr npm:publish"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.1.0",
