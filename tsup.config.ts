@@ -8,7 +8,6 @@ export default defineConfig({
   shims: false,
   dts: false,
   sourcemap: true,
-  target: 'es2022',
   external: [
     'vscode',
   ],
