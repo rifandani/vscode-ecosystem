@@ -3,7 +3,7 @@
   "name": "vscode-ecosystem",
   "displayName": "Vscode Ecosystem",
   "version": "1.7.3",
-  "packageManager": "pnpm@8.11.0",
+  "packageManager": "pnpm@8.12.1",
   "description": "My personal Vscode extensions mainly for frontend development",
   "author": "Tri Rizeki Rifandani <tri.rifandani@gmail.com>",
   "license": "MIT",
@@ -575,6 +575,9 @@
     "npm:publish": "npm publish",
     "release": "bumpp && nr vscode:publish && nr npm:publish"
   },
+  "dependencies": {
+    "npm-check-updates": "^16.14.12"
+  },
   "devDependencies": {
     "@antfu/eslint-config": "^2.1.0",
     "@antfu/ni": "^0.21.10",
@@ -588,7 +591,6 @@
     "esno": "^4.0.0",
     "lint-staged": "^15.1.0",
     "minimatch": "^9.0.3",
-    "npm-check-updates": "^16.14.12",
     "pnpm": "^8.11.0",
     "prettier": "^3.1.0",
     "rimraf": "^5.0.5",
