@@ -1,7 +1,6 @@
-import type { RunOptions } from 'npm-check-updates'
 import { packagerDefaultConfig } from './config'
 
-export const defaultCheckRunOptions: RunOptions = {
+export const defaultCheckRunOptions = {
   dep: packagerDefaultConfig.moduleTypes,
   target: packagerDefaultConfig.versionTarget,
   install: 'never',
@@ -11,7 +10,7 @@ export const defaultCheckRunOptions: RunOptions = {
   jsonUpgraded: true,
 }
 
-export const defaultUpdateRunOptions: RunOptions = {
+export const defaultUpdateRunOptions = {
   ...defaultCheckRunOptions,
   install: 'always',
   upgrade: true,

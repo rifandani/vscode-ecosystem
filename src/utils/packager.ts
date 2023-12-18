@@ -1,10 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import vscode from 'vscode'
-import { run } from 'npm-check-updates'
 import type { PackageJson } from 'type-fest'
 import { type PackagerDefaultConfig, configs } from '../constants/config'
-import { defaultCheckRunOptions, defaultUpdateRunOptions } from '../constants/packager'
 import { detectPackageManager, executeCommand } from './helper'
 import { getPackagerConfig } from './config'
 
@@ -99,15 +97,15 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     }
 
     // get original deps versions, and updated deps versions
-    const { moduleTypes, versionTarget } = getPackagerConfig()
+    // const { moduleTypes, versionTarget } = getPackagerConfig()
     const packageJsonContent = this.getPackageJsonContent(packageJsonPath)
-    const updatedDeps = await run({
-      ...defaultCheckRunOptions,
-      dep: moduleTypes,
-      target: versionTarget,
-      cwd: this.workspaceRoot!,
-    }, { cli: false }) as Record<string, string>
-    const deps = this.getModuleDependencyTreesBasedOnConfig(packageJsonContent, updatedDeps)
+    // const updatedDeps = await run({
+    //   ...defaultCheckRunOptions,
+    //   dep: moduleTypes,
+    //   target: versionTarget,
+    //   cwd: this.workspaceRoot!,
+    // }, { cli: false }) as Record<string, string>
+    const deps = this.getModuleDependencyTreesBasedOnConfig(packageJsonContent) // , updatedDeps
 
     return Promise.resolve(deps)
   }
@@ -276,55 +274,55 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   /**
    * update all outdated root dependencies
    */
-  public async updateAll() {
-    await vscode.window.withProgress({
-      location: vscode.ProgressLocation.Notification,
-      title: 'Updating outdated dependencies',
-      cancellable: false,
-    }, async (progress) => {
-      progress.report({ increment: 0, message: 'Starting updates...' })
+  // public async updateAll() {
+  //   await vscode.window.withProgress({
+  //     location: vscode.ProgressLocation.Notification,
+  //     title: 'Updating outdated dependencies',
+  //     cancellable: false,
+  //   }, async (progress) => {
+  //     progress.report({ increment: 0, message: 'Starting updates...' })
 
-      // check outdated deps, upgrade the version in package.json, and install it
-      await run({
-        ...defaultUpdateRunOptions,
-        cwd: this.workspaceRoot!,
-      }, { cli: false }) as Record<string, string>
+  //     // check outdated deps, upgrade the version in package.json, and install it
+  //     await run({
+  //       ...defaultUpdateRunOptions,
+  //       cwd: this.workspaceRoot!,
+  //     }, { cli: false }) as Record<string, string>
 
-      // Show an information message
-      vscode.window.showInformationMessage('All outdated dependencies updated!')
+  //     // Show an information message
+  //     vscode.window.showInformationMessage('All outdated dependencies updated!')
 
-      // refresh deps list
-      this.refresh()
-    })
-  }
+  //     // refresh deps list
+  //     this.refresh()
+  //   })
+  // }
 
   /**
    * update single outdated root dependencies
    */
-  public async updateSingle(dep?: DependencyTreeItem) {
-    if (!dep) {
-      vscode.window.showInformationMessage('This command can not be invoked directly')
-      return
-    }
+  // public async updateSingle(dep?: DependencyTreeItem) {
+  //   if (!dep) {
+  //     vscode.window.showInformationMessage('This command can not be invoked directly')
+  //     return
+  //   }
 
-    // make sure the dependencies is updatable
-    if ((dep.contextValue as ContextValue) === 'updatableDependencies' || (dep.contextValue as ContextValue) === 'updatableDevDependencies') {
-      const updatedVersion = (dep.description as string).split('->').at(-1)
+  //   // make sure the dependencies is updatable
+  //   if ((dep.contextValue as ContextValue) === 'updatableDependencies' || (dep.contextValue as ContextValue) === 'updatableDevDependencies') {
+  //     const updatedVersion = (dep.description as string).split('->').at(-1)
 
-      // upgrade the dep version in package.json, and install it
-      await run({
-        ...defaultUpdateRunOptions,
-        cwd: this.workspaceRoot!,
-        filter: dep.label, // only updates the selected dep
-      }, { cli: false }) as Record<string, string>
+  //     // upgrade the dep version in package.json, and install it
+  //     await run({
+  //       ...defaultUpdateRunOptions,
+  //       cwd: this.workspaceRoot!,
+  //       filter: dep.label, // only updates the selected dep
+  //     }, { cli: false }) as Record<string, string>
 
-      // Show an information message
-      vscode.window.showInformationMessage(`${dep.label} updated to${updatedVersion}`)
+  //     // Show an information message
+  //     vscode.window.showInformationMessage(`${dep.label} updated to${updatedVersion}`)
 
-      // refresh deps list
-      this.refresh()
-    }
-  }
+  //     // refresh deps list
+  //     this.refresh()
+  //   }
+  // }
 }
 
 /**

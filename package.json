@@ -456,18 +456,6 @@
         "icon": "$(trash)"
       },
       {
-        "title": "Update All Dependencies",
-        "category": "Veco - Packager",
-        "command": "veco.packager.updateAll",
-        "icon": "$(fold-up)"
-      },
-      {
-        "title": "Update Dependency",
-        "category": "Veco - Packager",
-        "command": "veco.packager.updateSingle",
-        "icon": "$(chevron-up)"
-      },
-      {
         "title": "Delete all lines given by the input",
         "category": "Veco - Deliner",
         "command": "veco.deliner.deleteAll",
@@ -535,11 +523,6 @@
           "command": "veco.packager.refreshEntry",
           "when": "view == veco_packager.treeDataProvider",
           "group": "navigation"
-        },
-        {
-          "command": "veco.packager.updateAll",
-          "when": "view == veco_packager.treeDataProvider",
-          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -547,11 +530,6 @@
           "command": "veco.packager.remove",
           "group": "inline",
           "when": "viewItem == dependencies || viewItem == devDependencies || viewItem == peerDependencies || viewItem == optionalDependencies || viewItem == updatableDependencies || viewItem == updatableDevDependencies || viewItem == updatablePeerDependencies || viewItem == updatableOptionalDependencies"
-        },
-        {
-          "command": "veco.packager.updateSingle",
-          "group": "inline",
-          "when": "viewItem == updatableDependencies || viewItem == updatableDevDependencies || viewItem == updatablePeerDependencies || viewItem == updatableOptionalDependencies"
         },
         {
           "command": "veco.packager.link",
@@ -574,9 +552,6 @@
     "npm:pack": "npm pack",
     "npm:publish": "npm publish",
     "release": "bumpp && nr vscode:publish && nr npm:publish"
-  },
-  "dependencies": {
-    "npm-check-updates": "^16.14.12"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.1.0",
