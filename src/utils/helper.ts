@@ -157,9 +157,9 @@ export function escapeRegExp(str: string) {
  * Creates/reuse a Terminal with a backing shell process.
  * The cwd of the terminal will be the workspace directory if it exists.
  */
-export function executeCommand({ cmd, createNew = true }: { cmd: string, createNew?: boolean }) {
+export function executeCommand(cmd: string, options: { createNew: boolean } = { createNew: true }) {
   let terminal = vscode.window.activeTerminal
-  if (createNew || !terminal)
+  if (options.createNew || !terminal)
     terminal = vscode.window.createTerminal()
 
   terminal.show()

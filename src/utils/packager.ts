@@ -1,36 +1,65 @@
-import fs from 'node:fs'
 import path from 'node:path'
+import { Buffer } from 'node:buffer'
 import vscode from 'vscode'
 import type { PackageJson } from 'type-fest'
+import semver from 'semver'
 import { type PackagerDefaultConfig, configs } from '../constants/config'
 import { detectPackageManager, executeCommand } from './helper'
 import { getPackagerConfig } from './config'
+import { jsdelivrApi } from './http'
 
-type DepType =
-  'dependencies' |
-  'devDependencies' |
-  'optionalDependencies' |
-  'peerDependencies'
-
-type ContextValue =
-  DepType |
+type DepType = PackagerDefaultConfig['moduleTypes'][number]
+type UpdateableDepType =
   'updatableDependencies' |
   'updatableDevDependencies' |
   'updatableOptionalDependencies' |
-  'updatablePeerDependencies' |
+  'updatablePeerDependencies'
+type NestedDepType =
   'nestedDependencies' |
   'nestedDevDependencies' |
   'nestedOptionalDependencies' |
   'nestedPeerDependencies'
+type ContextValue =
+  DepType |
+  UpdateableDepType |
+  NestedDepType
 
-type ModuleType = PackagerDefaultConfig['moduleTypes'][number]
+interface JsdelivrResolvedDep {
+  type: string
+  name: string
+  version: string
+  links: {
+    self: string
+    entrypoints: string
+    stats: string
+  }
+}
 
-const moduleTypeToDepTypeMapper = {
-  prod: 'dependencies',
-  dev: 'devDependencies',
-  optional: 'optionalDependencies',
-  peer: 'peerDependencies',
-} satisfies Record<ModuleType, DepType>
+const updateableContextValues: UpdateableDepType[] = ['updatableDependencies', 'updatableDevDependencies', 'updatableOptionalDependencies', 'updatablePeerDependencies']
+
+/**
+ * handle vscode `onDidChangeConfiguration` for packager config
+ */
+export function handleChangeConfiguration(event: vscode.ConfigurationChangeEvent, nodeDependenciesProvider: NodeDependenciesProvider) {
+  // do not bother to refresh the deps list, if the packager config does not changed
+  if (event.affectsConfiguration(configs.packager.root))
+    nodeDependenciesProvider.refresh()
+}
+
+/**
+ * update the `package.json` dependencies and execute install command
+ */
+async function updatePackageJsonDepsAndRunInstall(packageJsonUri: vscode.Uri, packageJsonContent: PackageJson) {
+  const contentBuffer = Buffer.from(JSON.stringify(packageJsonContent, null, 2))
+  // Write the updated content back to package.json
+  await vscode.workspace.fs.writeFile(packageJsonUri, contentBuffer)
+
+  // detect user package manager
+  const packageManager = await detectPackageManager()
+  const cmd = `${packageManager} install`
+  // run install
+  executeCommand(cmd)
+}
 
 /**
  * A tree item is an UI element of the tree.
@@ -61,7 +90,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   private _onDidChangeTreeData = new vscode.EventEmitter<DependencyTreeItem | undefined | null | void>()
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event
   private workspaceRoot = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
-    ? vscode.workspace.workspaceFolders[0].uri.fsPath
+    ? vscode.workspace.workspaceFolders[0].uri
     : undefined
 
   getTreeItem(element: DependencyTreeItem) {
@@ -76,53 +105,102 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
 
     // this is when we are clicking on the dep item
     if (element)
-      return this.getDependenciesView(element)
+      return Promise.resolve(await this.getNestedView(element))
 
     // this is when we are on the root view
-    return this.getRootView()
+    return Promise.resolve(await this.getRootView())
   }
 
   /**
    * should be called when there are no `element` or we are on the root view
-   * we need to check for outdated dependencies using `taze`
+   * we do need to check outdated deps here
    */
   private async getRootView() {
     // get the root workspace package.json
-    const packageJsonPath = path.join(this.workspaceRoot!, 'package.json')
-    const packageJsonExists = this.pathExists(packageJsonPath)
+    const packageJsonUri = vscode.Uri.joinPath(this.workspaceRoot!, 'package.json')
+    const packageJsonStat = await this.checkFileExists(packageJsonUri)
 
-    if (!packageJsonExists) {
-      vscode.window.showInformationMessage('Workspace has no package.json')
-      return Promise.resolve([])
+    if (!packageJsonStat) {
+      vscode.window.showInformationMessage('Workspace has no "package.json" file')
+      return []
     }
 
-    // get original deps versions, and updated deps versions
-    // const { moduleTypes, versionTarget } = getPackagerConfig()
-    const packageJsonContent = this.getPackageJsonContent(packageJsonPath)
-    // const updatedDeps = await run({
-    //   ...defaultCheckRunOptions,
-    //   dep: moduleTypes,
-    //   target: versionTarget,
-    //   cwd: this.workspaceRoot!,
-    // }, { cli: false }) as Record<string, string>
-    const deps = this.getModuleDependencyTreesBasedOnConfig(packageJsonContent) // , updatedDeps
+    // get original deps versions, updated deps versions, and root module deps
+    const packageJsonContent = await this.getPackageJsonContent(packageJsonUri)
+    const updatedDeps = await this.getUpdatedDeps(packageJsonContent)
+    const deps = await this.getModuleDependencyTreesBasedOnConfig(packageJsonContent, updatedDeps) // pass in `updatedDeps`
 
-    return Promise.resolve(deps)
+    return deps
   }
 
   /**
    * should be called when there are `element` or we are clicking on the dep item
-   * we does not need to check outdated deps here
+   * we do NOT need to check outdated deps here
    */
-  private getDependenciesView(element: DependencyTreeItem) {
-    // get package.json paths
-    const nodeModulePackageJsonPath = path.join(this.workspaceRoot!, 'node_modules', element.label as string, 'package.json')
-    const packageJsonContent = this.getPackageJsonContent(nodeModulePackageJsonPath)
+  private async getNestedView(element: DependencyTreeItem) {
+    // get package.json paths, content, and finally nested module deps
+    const nodeModulePackageJsonPath = vscode.Uri.joinPath(this.workspaceRoot!, 'node_modules', element.label as string, 'package.json')
+    const packageJsonContent = await this.getPackageJsonContent(nodeModulePackageJsonPath)
+    const deps = await this.getModuleDependencyTreesBasedOnConfig(packageJsonContent) // without passing `updatedDeps`
 
-    // get nested module dependencies
-    const deps = this.getModuleDependencyTreesBasedOnConfig(packageJsonContent)
+    return deps
+  }
 
-    return Promise.resolve(deps)
+  /**
+   * given the `packageJsonContent`, get all updateable dependencies while also respecting the user config
+   */
+  private async getUpdatedDeps(packageJsonContent: PackageJson) {
+    const { moduleTypes, versionTarget } = getPackagerConfig()
+    let affectedDeps: PackageJson['dependencies'] = {}
+    const updatedDeps: PackageJson['dependencies'] = {}
+    const promises = []
+
+    // for every "prod" / "dev" / "peer" / "optional" dependencies
+    for (const type of moduleTypes) {
+      const depObject = packageJsonContent[type]
+
+      // if deps not found, continue
+      if (!depObject)
+        continue
+
+      // update `affectedDeps`
+      affectedDeps = {
+        ...affectedDeps,
+        ...depObject,
+      }
+
+      const _promises = Object.entries(depObject).map(([name, version]) => {
+        // `version` still includes caret (^), tilde (~), etc...
+        const specifier = versionTarget === 'semver' ? version : versionTarget
+        return jsdelivrApi.get(`packages/npm/${name}/resolved/?specifier=${specifier}`)
+      })
+
+      promises.push(..._promises)
+    }
+
+    const manifests = await Promise.allSettled(promises)
+
+    // updates `finalUpdatedDeps` for each resolved `manifests`
+    for (const manifest of manifests) {
+      // do not include rejected promise
+      if (manifest.status === 'rejected')
+        continue
+
+      const resolvedDep = await manifest.value.json<JsdelivrResolvedDep>() // version without tilde / caret
+      const usedDepVersion = affectedDeps[resolvedDep.name]! // version with tilde / caret
+      const prefix = this.getVersionPrefix(usedDepVersion) // like ^, ~, >, >=, etc...
+      const parseableVer = usedDepVersion.replace(prefix, '') // version without prefix
+      const parsed = semver.parse(parseableVer)
+
+      // do not include the same version deps
+      if (!parsed || parsed.version === resolvedDep.version)
+        continue
+
+      // only include when the version is newer
+      updatedDeps[resolvedDep.name] = prefix + resolvedDep.version
+    }
+
+    return updatedDeps
   }
 
   /**
@@ -130,33 +208,37 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
    *
    * if `updatedDeps` defined, then it will be root dependencies, otherwise it's nested dependencies
    */
-  private getModuleDependencyTreesBasedOnConfig(packageJsonContent: PackageJson, updatedDeps?: PackageJson['dependencies']) {
+  private async getModuleDependencyTreesBasedOnConfig(packageJsonContent: PackageJson, updatedDeps?: PackageJson['dependencies']) {
     const { moduleTypes } = getPackagerConfig()
-    const deps: DependencyTreeItem[] = []
+    const depTrees: DependencyTreeItem[] = []
 
+    // for every "prod" / "dev" / "peer" / "optional" dependencies
     for (const type of moduleTypes) {
-      const depType = moduleTypeToDepTypeMapper[type]
-      const contextValue = updatedDeps ? depType : `nested${depType.at(0)!.toUpperCase()}${depType.slice(1)}` as ContextValue
-      const dep = this.getModuleDependencyTrees({
-        updatedDeps, // pass in `updatedDeps` to get informed about the outdated deps
+      const deps = packageJsonContent[type]
+      const contextValue = updatedDeps ? type : `nested${type.at(0)!.toUpperCase()}${type.slice(1)}` as ContextValue
+      const _depTrees = await this.getModuleDependencyTrees({
+        deps,
         contextValue,
-        deps: packageJsonContent[depType],
+        updatedDeps, // pass in `updatedDeps` to get informed about the outdated deps
       })
 
-      deps.push(...dep)
+      depTrees.push(..._depTrees)
     }
 
-    return deps
+    return depTrees
   }
 
   /**
    * given the `dependencies` object from `package.json`, then convert it into `DependencyTreeItem`
    */
-  private getModuleDependencyTrees({ contextValue, deps = {}, updatedDeps = {} }: { contextValue: ContextValue, deps: PackageJson['dependencies'], updatedDeps?: PackageJson['dependencies'] }) {
-    return Object.keys(deps).map((moduleName) => {
+  private async getModuleDependencyTrees({ contextValue, deps = {}, updatedDeps = {} }: { contextValue: ContextValue, deps: PackageJson['dependencies'], updatedDeps?: PackageJson['dependencies'] }) {
+    const depTrees = []
+
+    // for each installed module
+    for (const moduleName of Object.keys(deps)) {
       const version = deps[moduleName] as string
-      const modulePath = path.join(this.workspaceRoot!, 'node_modules', moduleName)
-      const moduleExists = this.pathExists(modulePath)
+      const modulePath = vscode.Uri.joinPath(this.workspaceRoot!, 'node_modules', moduleName)
+      const moduleExists = await this.checkFileExists(modulePath)
       let description
         = contextValue === 'devDependencies' || contextValue === 'nestedDevDependencies'
           ? `(dev) ${version}`
@@ -171,7 +253,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
       if (Object.hasOwn(updatedDeps, moduleName)) {
         // inform updated package in description
         description += ` -> ${updatedDeps[moduleName]}`
-        // set `contextValue` as updatable
+        // set `newContextValue` as updatable
         newContextValue
           = contextValue === 'dependencies'
             ? 'updatableDependencies'
@@ -182,38 +264,59 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
                 : 'updatableOptionalDependencies'
       }
 
-      return new DependencyTreeItem(
+      depTrees.push(new DependencyTreeItem(
         moduleName,
         moduleExists ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
         {
           description,
           contextValue: newContextValue,
         },
-      )
-    })
+      ))
+    }
+
+    return depTrees
   }
 
   /**
-   * given the `packageJsonPath`, read the file content and parse it
+   * given the `version`, get the prefix like caret (^), tilde (~), ranges (<, <=, >, >=, =)
    */
-  private getPackageJsonContent(packageJsonPath: string) {
-    const content = fs.readFileSync(packageJsonPath, 'utf-8')
+  private getVersionPrefix(version: string) {
+    let prefix = ''
 
-    return JSON.parse(content) as PackageJson
+    for (let index = 0; index < version.length; index++) {
+      const _prefix = version.substring(index, index + 1)
+
+      if (Number.isNaN(+_prefix)) {
+        prefix += _prefix
+        continue
+      }
+
+      break
+    }
+
+    return prefix
   }
 
   /**
-   * synchronously tests a user's permissions for the file or directory specified by path
+   * given the `packageJsonUri`, read the file content and parse it
    */
-  private pathExists(_path: string) {
+  private async getPackageJsonContent(packageJsonUri: vscode.Uri) {
+    const content = await vscode.workspace.fs.readFile(packageJsonUri)
+
+    return JSON.parse(content.toString()) as PackageJson
+  }
+
+  /**
+   * given the `uri`, read the file stat, if it returns `undefined` that means the file doesn't exists
+   */
+  private async checkFileExists(uri: vscode.Uri) {
     try {
-      fs.accessSync(_path)
+      const stat = await vscode.workspace.fs.stat(uri)
+      return stat
     }
     catch (err) {
-      return false
+      return undefined
     }
-
-    return true
   }
 
   /**
@@ -267,69 +370,86 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
         break
     }
 
-    executeCommand({ cmd })
+    executeCommand(cmd)
     this.refresh()
   }
 
   /**
    * update all outdated root dependencies
+   *
+   * NOTE: should be displayed & clickable, if there are at least 1 updateable dependencies
    */
-  // public async updateAll() {
-  //   await vscode.window.withProgress({
-  //     location: vscode.ProgressLocation.Notification,
-  //     title: 'Updating outdated dependencies',
-  //     cancellable: false,
-  //   }, async (progress) => {
-  //     progress.report({ increment: 0, message: 'Starting updates...' })
+  public async updateAll() {
+    const rootDeps = await this.getChildren()
+    const updateableRootDeps = rootDeps.filter(dep => updateableContextValues.includes(dep.contextValue as UpdateableDepType))
 
-  //     // check outdated deps, upgrade the version in package.json, and install it
-  //     await run({
-  //       ...defaultUpdateRunOptions,
-  //       cwd: this.workspaceRoot!,
-  //     }, { cli: false }) as Record<string, string>
+    if (!updateableRootDeps.length) {
+      vscode.window.showInformationMessage(`There is no updateable dependencies!`)
+      return
+    }
 
-  //     // Show an information message
-  //     vscode.window.showInformationMessage('All outdated dependencies updated!')
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: 'Updating outdated dependencies',
+      cancellable: false,
+    }, async (progress) => {
+      progress.report({ increment: 10, message: `Starting updates...` })
 
-  //     // refresh deps list
-  //     this.refresh()
-  //   })
-  // }
+      const { moduleTypes } = getPackagerConfig()
+      const packageJsonUri = vscode.Uri.joinPath(this.workspaceRoot!, 'package.json')
+      const packageJsonContent = await this.getPackageJsonContent(packageJsonUri)
+
+      // for each `updateableRootDeps`, we update the `packageJsonContent`
+      for (const dep of updateableRootDeps) {
+        const updatedVersion = (dep.description as string).split('->').at(-1)
+        const depTypeToUpdate = moduleTypes.find(type => packageJsonContent[type]?.[dep.label])
+
+        if (!depTypeToUpdate) {
+          vscode.window.showInformationMessage(`Module ${dep.label} doesn't exists in ${moduleTypes.map(type => `"${type}"`).join(' or ')}`)
+          continue
+        }
+
+        // update the affected dep version from `packageJsonContent`
+        packageJsonContent[depTypeToUpdate]![dep.label] = updatedVersion
+      }
+
+      await updatePackageJsonDepsAndRunInstall(packageJsonUri, packageJsonContent)
+      this.refresh()
+    })
+  }
 
   /**
    * update single outdated root dependencies
+   *
+   * NOTE: should only run if the selected dependency is the root AND updateable
    */
-  // public async updateSingle(dep?: DependencyTreeItem) {
-  //   if (!dep) {
-  //     vscode.window.showInformationMessage('This command can not be invoked directly')
-  //     return
-  //   }
+  public async updateSingle(dep?: DependencyTreeItem) {
+    if (!dep) {
+      vscode.window.showInformationMessage('This command can not be invoked directly')
+      return
+    }
 
-  //   // make sure the dependencies is updatable
-  //   if ((dep.contextValue as ContextValue) === 'updatableDependencies' || (dep.contextValue as ContextValue) === 'updatableDevDependencies') {
-  //     const updatedVersion = (dep.description as string).split('->').at(-1)
+    const contextValue = dep.contextValue as ContextValue
 
-  //     // upgrade the dep version in package.json, and install it
-  //     await run({
-  //       ...defaultUpdateRunOptions,
-  //       cwd: this.workspaceRoot!,
-  //       filter: dep.label, // only updates the selected dep
-  //     }, { cli: false }) as Record<string, string>
+    // make sure the dependencies is updatable
+    if (!updateableContextValues.includes(contextValue as UpdateableDepType))
+      return
 
-  //     // Show an information message
-  //     vscode.window.showInformationMessage(`${dep.label} updated to${updatedVersion}`)
+    const { moduleTypes } = getPackagerConfig()
+    const packageJsonUri = vscode.Uri.joinPath(this.workspaceRoot!, 'package.json')
+    const packageJsonContent = await this.getPackageJsonContent(packageJsonUri)
+    const updatedVersion = (dep.description as string).split('->').at(-1)
+    const depTypeToUpdate = moduleTypes.find(type => packageJsonContent[type]?.[dep.label])
 
-  //     // refresh deps list
-  //     this.refresh()
-  //   }
-  // }
-}
+    if (!depTypeToUpdate) {
+      vscode.window.showInformationMessage(`Module ${dep.label} doesn't exists in ${moduleTypes.map(type => `"${type}"`).join(' or ')}`)
+      return
+    }
 
-/**
- * handle vscode `onDidChangeConfiguration` for packager config
- */
-export function handleChangeConfiguration(event: vscode.ConfigurationChangeEvent, nodeDependenciesProvider: NodeDependenciesProvider) {
-  // do not bother to refresh the deps list, if the packager config does not changed
-  if (event.affectsConfiguration(configs.packager.root))
-    nodeDependenciesProvider.refresh()
+    // update the affected dep version from `packageJsonContent`
+    packageJsonContent[depTypeToUpdate]![dep.label] = updatedVersion
+
+    await updatePackageJsonDepsAndRunInstall(packageJsonUri, packageJsonContent)
+    this.refresh()
+  }
 }

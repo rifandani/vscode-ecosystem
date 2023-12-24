@@ -31,13 +31,13 @@ export function initCommands(nodeDependenciesProvider: NodeDependenciesProvider)
       commandIds.remove,
       (dep?: DependencyTreeItem) => nodeDependenciesProvider.remove(dep),
     ),
-    // vscode.commands.registerCommand(
-    //   commandIds.updateAll,
-    //   () => nodeDependenciesProvider.updateAll(),
-    // ),
-    // vscode.commands.registerCommand(
-    //   commandIds.updateSingle,
-    //   (dep?: DependencyTreeItem) => nodeDependenciesProvider.updateSingle(dep),
-    // ),
+    vscode.commands.registerCommand(
+      commandIds.updateAll,
+      () => nodeDependenciesProvider.updateAll(),
+    ),
+    vscode.commands.registerCommand(
+      commandIds.updateSingle,
+      (dep?: DependencyTreeItem) => nodeDependenciesProvider.updateSingle(dep),
+    ),
   ]
 }
