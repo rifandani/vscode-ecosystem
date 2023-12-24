@@ -133,5 +133,5 @@ export async function deleteRegionMarker({ editor, document }: { editor: vscode.
   })
 
   // format the document
-  // await vscode.commands.executeCommand('editor.action.formatDocument')
+  await vscode.commands.executeCommand('editor.action.formatDocument')
 }

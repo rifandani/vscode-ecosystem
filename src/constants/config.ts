@@ -47,14 +47,8 @@ export interface ColorizeDefaultConfig {
 }
 
 export interface PackagerDefaultConfig {
-  moduleTypes: ('prod' | 'dev' | 'optional' | 'peer')[]
-  versionTarget:
-    | 'semver'
-    | 'latest'
-    | 'newest'
-    | 'greatest'
-    | 'minor'
-    | 'patch'
+  moduleTypes: ('dependencies' | 'devDependencies' | 'optionalDependencies' | 'peerDependencies')[]
+  versionTarget: 'semver' | 'latest'
 }
 
 export interface DelinerDefaultConfig {
@@ -394,21 +388,17 @@ export const packagerDefaultConfig = {
   /**
    * Check one or more types of dependencies only
    *
-   * - "prod": refers to "dependencies" in package.json
-   * - "dev": refers to "devDependencies" in package.json
-   * - "optional": refers to "optionalDependencies" in package.json
-   * - "peer": refers to "peerDependencies" in package.json
+   * - "dependencies": refers to "dependencies" in package.json
+   * - "devDependencies": refers to "devDependencies" in package.json
+   * - "optionalDependencies": refers to "optionalDependencies" in package.json
+   * - "peerDependencies": refers to "peerDependencies" in package.json
    */
-  moduleTypes: ['prod', 'dev'],
+  moduleTypes: ['dependencies', 'devDependencies'],
   /**
    * Determines the version to upgrade to
    *
    * - "semver": Upgrade to the highest version within the semver range specified in your package.json
    * - "latest": Upgrade to whatever the package's "latest" git tag points to. Excludes prereleases.
-   * - "newest": Upgrade to the version with the most recent publish date, even if there are other version numbers that are higher. Includes prereleases.
-   * - "greatest": Upgrade to the highest version number published, regardless of release date or tag.
-   * - "minor": Upgrade to the highest minor version without bumping the major version.
-   * - "patch": Upgrade to the highest patch version without bumping the minor or major versions.
    */
   versionTarget: 'semver',
 } satisfies PackagerDefaultConfig
