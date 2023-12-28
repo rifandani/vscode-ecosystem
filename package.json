@@ -514,6 +514,12 @@
         "mac": "ctrl+m ctrl+a"
       }
     ],
+    "viewsWelcome": [
+      {
+        "view": "veco_packager.treeDataProvider",
+        "contents": "In order to use packager features, you can open a folder containing a 'package.json' file or initialize it by clicking button below.\n[Initialize package.json](command:veco.packager.init)\nClick on the refresh button after you have initialized the 'package.json'."
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {

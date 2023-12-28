@@ -1,6 +1,7 @@
 import vscode from 'vscode'
 import type { DependencyTreeItem, NodeDependenciesProvider } from '../utils/packager'
 import { views } from '../constants/config'
+import { executeCommand } from '../utils/helper'
 
 export const commandIds = {
   refreshEntry: 'veco.packager.refreshEntry',
@@ -8,7 +9,16 @@ export const commandIds = {
   remove: 'veco.packager.remove',
   updateAll: 'veco.packager.updateAll',
   updateSingle: 'veco.packager.updateSingle',
+  init: 'veco.packager.init',
 } as const
+
+/**
+ * initialize `package.json` file in the root directory
+ */
+function initPackageJson() {
+  const cmd = 'npm init --yes'
+  executeCommand(cmd)
+}
 
 /**
  * init all commands and register tree data provider
@@ -38,6 +48,10 @@ export function initCommands(nodeDependenciesProvider: NodeDependenciesProvider)
     vscode.commands.registerCommand(
       commandIds.updateSingle,
       (dep?: DependencyTreeItem) => nodeDependenciesProvider.updateSingle(dep),
+    ),
+    vscode.commands.registerCommand(
+      commandIds.init,
+      () => initPackageJson(),
     ),
   ]
 }

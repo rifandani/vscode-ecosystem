@@ -121,7 +121,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     const packageJsonStat = await this.checkFileExists(packageJsonUri)
 
     if (!packageJsonStat) {
-      vscode.window.showInformationMessage('Workspace has no "package.json" file')
+      vscode.window.showInformationMessage('There is no "package.json" file in the workspace')
       return []
     }
 
