@@ -1,7 +1,7 @@
 import vscode from 'vscode'
 import type { DependencyTreeItem, NodeDependenciesProvider } from '../utils/packager'
 import { views } from '../constants/config'
-import { executeCommand } from '../utils/helper'
+import { executeTerminalCommand } from '../utils/helper'
 
 export const commandIds = {
   refreshEntry: 'veco.packager.refreshEntry',
@@ -17,7 +17,7 @@ export const commandIds = {
  */
 function initPackageJson() {
   const cmd = 'npm init --yes'
-  executeCommand(cmd)
+  executeTerminalCommand(cmd)
 }
 
 /**

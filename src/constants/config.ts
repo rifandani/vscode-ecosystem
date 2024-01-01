@@ -66,9 +66,6 @@ export const constants = {
     hint: vscode.DiagnosticSeverity.Hint,
     none: undefined,
   },
-  highlight: {
-    outputChannel: 'Vscode Ecosystem - Highlight',
-  },
 } as const
 
 export const configs = {

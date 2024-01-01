@@ -157,7 +157,7 @@ export function escapeRegExp(str: string) {
  * Creates/reuse a Terminal with a backing shell process.
  * The cwd of the terminal will be the workspace directory if it exists.
  */
-export function executeCommand(cmd: string, options: { createNew: boolean } = { createNew: true }) {
+export function executeTerminalCommand(cmd: string, options: { createNew: boolean } = { createNew: true }) {
   let terminal = vscode.window.activeTerminal
   if (options.createNew || !terminal)
     terminal = vscode.window.createTerminal()
@@ -165,3 +165,18 @@ export function executeCommand(cmd: string, options: { createNew: boolean } = { 
   terminal.show()
   terminal.sendText(cmd)
 }
+
+/**
+ * create a status bar item with left alignment
+ */
+export function createStatusBarItem(options?: Partial<Pick<vscode.StatusBarItem, 'name' | 'text' | 'tooltip' | 'color' | 'backgroundColor' | 'command' | 'accessibilityInformation'>>) {
+  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)
+
+  if (options) {
+    for (const [key, value] of Object.entries(options))
+      // @ts-expect-error dynamically assign value to the object
+      statusBarItem[key] = value
+  }
+
+  return statusBarItem
+};
