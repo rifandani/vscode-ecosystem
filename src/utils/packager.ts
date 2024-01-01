@@ -8,6 +8,7 @@ import { detectPackageManager, executeCommand } from './helper'
 import { getPackagerConfig } from './config'
 import { jsdelivrApi } from './http'
 
+// #region INTERFACES
 type DepType = PackagerDefaultConfig['moduleTypes'][number]
 type UpdateableDepType =
   'updatableDependencies' |
@@ -34,6 +35,7 @@ interface JsdelivrResolvedDep {
     stats: string
   }
 }
+// #endregion
 
 const updateableContextValues: UpdateableDepType[] = ['updatableDependencies', 'updatableDevDependencies', 'updatableOptionalDependencies', 'updatablePeerDependencies']
 

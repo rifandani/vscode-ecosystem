@@ -185,3 +185,7 @@ export const hwbRegex = /hwb\(\s*(\d+(\.\d+)?)\s*(?:%|\s+)(\d+(\.\d+)?)%\s*(?:%|
  * // oklab(59% 0.1 0.1) is oklab, hwb(194 50% 20%) is hwb
  */
 export const colorsRegex = /#(?:[0-9a-fA-F]{3}){1,2}\b|rgb\(\s*\d+\s*(?:,\s*\d+\s*){0,2}(?:\s*\/\s*(?:\d+\.?\d*|\.\d+))?\)|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*(?:\d+\.?\d*|\.\d+)\s*\)|hsl\(\s*(\d+(\.\d+)?)deg,\s*(\d+(\.\d+)?)%,\s*(\d+(\.\d+)?)%\s*\)|lch\(\s*(?:\d+(\.\d+)?%?\s+){1,2}\d+(\.\d+)?\s+\d+(\.\d+)?\)|color\(display-p3\s*(?:\d+(\.\d+)?)\s+(?:\d+(\.\d+)?)\s+(?:\d+(\.\d+)?)\)|oklab\(\s*\d+(\.\d+)?%\s+\d+(\.\d+)\s+\d+(\.\d+)\)|hwb\(\s*(\d+(\.\d+)?)\s*(?:%|\s+)(\d+(\.\d+)?)%\s*(?:%|\s+)(\d+(\.\d+)?)%\)/ig
+
+export const commandIds = {
+  toggleEnabled: 'veco.colorize.toggleEnabled',
+} as const

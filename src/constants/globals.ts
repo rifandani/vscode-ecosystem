@@ -25,11 +25,6 @@ export interface HighlightState {
   statusBarItem: null | vscode.StatusBarItem
   outputChannel: null | vscode.OutputChannel
 }
-
-export interface ColorizeState {
-  timeout: null | NodeJS.Timeout
-  decorationTypes: vscode.TextEditorDecorationType[]
-}
 // #endregion
 
 export const defaultState = {
@@ -95,10 +90,6 @@ export const defaultState = {
     statusBarItem: null,
     outputChannel: null,
   } as HighlightState,
-  colorize: {
-    timeout: null,
-    decorationTypes: [],
-  } as ColorizeState,
 }
 
 // copied, so that when we mutate the `state` object, it doesn't also mutate `defaultState` object
