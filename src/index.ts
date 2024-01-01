@@ -21,7 +21,6 @@ export async function activate(context: vscode.ExtensionContext) {
   const highlight = new Highlight()
   const fileNesting = new FileNesting()
   const colorize = new Colorize()
-  const logger = new Logger()
   const region = new Region()
 
   // init "highlight" internal states
@@ -72,19 +71,19 @@ export async function activate(context: vscode.ExtensionContext) {
   const loggerDisposables = [
     vscode.commands.registerCommand(
       loggerCommandIds.insert,
-      () => logger.insertCommand(),
+      () => Logger.insertCommand(),
     ),
     vscode.commands.registerCommand(
       loggerCommandIds.comment,
-      () => logger.commentCommand(),
+      () => Logger.commentCommand(),
     ),
     vscode.commands.registerCommand(
       loggerCommandIds.uncomment,
-      () => logger.uncommentCommand(),
+      () => Logger.uncommentCommand(),
     ),
     vscode.commands.registerCommand(
       loggerCommandIds.delete,
-      () => logger.deleteAllCommand(),
+      () => Logger.deleteAllCommand(),
     ),
   ]
 
