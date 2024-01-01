@@ -1,5 +1,4 @@
 import vscode from 'vscode'
-import { disposables as fileNestingDisposables } from './commands/file-nesting'
 import { disposables as loggerDisposables } from './commands/logger'
 import { disposables as regionDisposables } from './commands/region'
 import { initCommands as initPackagerCommands } from './commands/packager'
@@ -9,10 +8,15 @@ import { Colorize } from './modules/colorize'
 import { commandIds as colorizeCommandIds } from './constants/colorize'
 import { Highlight } from './modules/highlight'
 import { commandIds as highlightCommandIds } from './constants/highlight'
+import { FileNesting } from './modules/file-nesting'
+import { commandIds as fileNestingCommandIds } from './constants/file-nesting'
 
 export async function activate(context: vscode.ExtensionContext) {
   const colorize = new Colorize()
   const highlight = new Highlight()
+  const fileNesting = new FileNesting()
+
+  // init all modules internal states
   highlight.init()
 
   // initialize all necessary things for "packager"
@@ -38,6 +42,17 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       highlightCommandIds.showOutputChannel,
       () => highlight.showOutputChannelCommand(),
+    ),
+  ]
+
+  const fileNestingDisposables = [
+    vscode.commands.registerCommand(
+      fileNestingCommandIds.apply,
+      () => fileNesting.applyCommand(),
+    ),
+    vscode.commands.registerCommand(
+      fileNestingCommandIds.remove,
+      () => fileNesting.removeCommand(),
     ),
   ]
 
