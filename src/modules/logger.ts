@@ -6,7 +6,7 @@ export class Logger {
   /**
    * a command to insert logger based on the cursor position / user selection
    */
-  public async insertCommand() {
+  static async insertCommand() {
     const editor = vscode.window.activeTextEditor
 
     if (!editor)
@@ -44,7 +44,7 @@ export class Logger {
   /**
    * a command to comment out all detected `console.log`
    */
-  public async commentCommand() {
+  static async commentCommand() {
     const editor = vscode.window.activeTextEditor
 
     if (!editor)
@@ -85,7 +85,7 @@ export class Logger {
   /**
    * a command to uncomment out all commented `console.log`
    */
-  public async uncommentCommand() {
+  static async uncommentCommand() {
     const editor = vscode.window.activeTextEditor
 
     if (!editor)
@@ -120,7 +120,7 @@ export class Logger {
   /**
    * a command to delete all `console.log` occurences, wether it's commented or not
    */
-  public async deleteAllCommand() {
+  static async deleteAllCommand() {
     const editor = vscode.window.activeTextEditor
 
     if (!editor)
