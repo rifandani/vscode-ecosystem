@@ -1,5 +1,4 @@
 import vscode from 'vscode'
-import { disposables as loggerDisposables } from './commands/logger'
 import { disposables as regionDisposables } from './commands/region'
 import { initCommands as initPackagerCommands } from './commands/packager'
 import { disposables as delinerDisposables } from './commands/deliner'
@@ -10,20 +9,22 @@ import { Highlight } from './modules/highlight'
 import { commandIds as highlightCommandIds } from './constants/highlight'
 import { FileNesting } from './modules/file-nesting'
 import { commandIds as fileNestingCommandIds } from './constants/file-nesting'
+import { Logger } from './modules/logger'
+import { commandIds as loggerCommandIds } from './constants/logger'
 
 export async function activate(context: vscode.ExtensionContext) {
-  const colorize = new Colorize()
   const highlight = new Highlight()
   const fileNesting = new FileNesting()
+  const colorize = new Colorize()
+  const logger = new Logger()
 
-  // init all modules internal states
+  // init "highlight" internal states
   highlight.init()
-
-  // initialize all necessary things for "packager"
+  // init "packager" providers
   const nodeDependenciesProvider = new NodeDependenciesProvider()
   const packagerDisposables = initPackagerCommands(nodeDependenciesProvider)
 
-  // trigger update "highlight" & "colorize" for the first time
+  // trigger update "highlight" and "colorize" for the first time
   if (vscode.window.activeTextEditor) {
     highlight.triggerUpdateHighlight()
     colorize.triggerUpdateColorize()
@@ -60,6 +61,25 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       colorizeCommandIds.toggleEnabled,
       () => colorize.toggleEnabledCommand(),
+    ),
+  ]
+
+  const loggerDisposables = [
+    vscode.commands.registerCommand(
+      loggerCommandIds.insert,
+      () => logger.insertCommand(),
+    ),
+    vscode.commands.registerCommand(
+      loggerCommandIds.comment,
+      () => logger.commentCommand(),
+    ),
+    vscode.commands.registerCommand(
+      loggerCommandIds.uncomment,
+      () => logger.uncommentCommand(),
+    ),
+    vscode.commands.registerCommand(
+      loggerCommandIds.delete,
+      () => logger.deleteAllCommand(),
     ),
   ]
 
