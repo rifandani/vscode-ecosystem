@@ -1,5 +1,4 @@
 import vscode from 'vscode'
-import { disposables as regionDisposables } from './commands/region'
 import { initCommands as initPackagerCommands } from './commands/packager'
 import { disposables as delinerDisposables } from './commands/deliner'
 import { NodeDependenciesProvider, handleChangeConfiguration as handleChangeConfigurationPackager } from './utils/packager'
@@ -11,12 +10,15 @@ import { FileNesting } from './modules/file-nesting'
 import { commandIds as fileNestingCommandIds } from './constants/file-nesting'
 import { Logger } from './modules/logger'
 import { commandIds as loggerCommandIds } from './constants/logger'
+import { Region } from './modules/region'
+import { commandIds as regionCommandIds } from './constants/region'
 
 export async function activate(context: vscode.ExtensionContext) {
   const highlight = new Highlight()
   const fileNesting = new FileNesting()
   const colorize = new Colorize()
   const logger = new Logger()
+  const region = new Region()
 
   // init "highlight" internal states
   highlight.init()
@@ -80,6 +82,21 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       loggerCommandIds.delete,
       () => logger.deleteAllCommand(),
+    ),
+  ]
+
+  const regionDisposables = [
+    vscode.commands.registerCommand(
+      regionCommandIds.mark,
+      () => region.markCommand(),
+    ),
+    vscode.commands.registerCommand(
+      regionCommandIds.delete,
+      () => region.deleteInDocumentCommand(),
+    ),
+    vscode.commands.registerCommand(
+      regionCommandIds.deleteAll,
+      () => region.deleteAllAcrossWorkspaceCommand(),
     ),
   ]
 
