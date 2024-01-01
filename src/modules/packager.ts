@@ -3,68 +3,41 @@ import { Buffer } from 'node:buffer'
 import vscode from 'vscode'
 import type { PackageJson } from 'type-fest'
 import semver from 'semver'
-import { type PackagerDefaultConfig, configs } from '../constants/config'
-import { detectPackageManager, executeTerminalCommand } from './helper'
-import { getPackagerConfig } from './config'
-import { jsdelivrApi } from './http'
+import { configs } from '../constants/config'
+import { detectPackageManager, executeTerminalCommand } from '../utils/helper'
+import { getPackagerConfig } from '../utils/config'
+import { jsdelivrApi } from '../utils/http'
+import type { ContextValue, JsdelivrResolvedDep, UpdateableDepType } from '../constants/packager'
+import { updateableContextValues } from '../constants/packager'
 
-// #region INTERFACES
-type DepType = PackagerDefaultConfig['moduleTypes'][number]
-type UpdateableDepType =
-  'updatableDependencies' |
-  'updatableDevDependencies' |
-  'updatableOptionalDependencies' |
-  'updatablePeerDependencies'
-type NestedDepType =
-  'nestedDependencies' |
-  'nestedDevDependencies' |
-  'nestedOptionalDependencies' |
-  'nestedPeerDependencies'
-type ContextValue =
-  DepType |
-  UpdateableDepType |
-  NestedDepType
+export class Packager {
+  /**
+   * update the `package.json` dependencies and execute install command
+   */
+  static async updatePackageJsonDepsAndRunInstall(packageJsonUri: vscode.Uri, packageJsonContent: PackageJson) {
+    const contentBuffer = Buffer.from(JSON.stringify(packageJsonContent, null, 2))
+    // Write the updated content back to package.json
+    await vscode.workspace.fs.writeFile(packageJsonUri, contentBuffer)
 
-interface JsdelivrResolvedDep {
-  type: string
-  name: string
-  version: string
-  links: {
-    self: string
-    entrypoints: string
-    stats: string
+    // detect user package manager
+    const packageManager = await detectPackageManager()
+    const cmd = `${packageManager} install`
+    // run install
+    executeTerminalCommand(cmd)
+  }
+
+  /**
+   * handle vscode `onDidChangeConfiguration` for packager config
+   */
+  static handleChangeConfiguration(event: vscode.ConfigurationChangeEvent, nodeDependenciesProvider: NodeDependenciesProvider) {
+    // do not bother to refresh the deps list, if the packager config does not changed
+    if (event.affectsConfiguration(configs.packager.root))
+      nodeDependenciesProvider.refreshCommand()
   }
 }
-// #endregion
-
-const updateableContextValues: UpdateableDepType[] = ['updatableDependencies', 'updatableDevDependencies', 'updatableOptionalDependencies', 'updatablePeerDependencies']
 
 /**
- * handle vscode `onDidChangeConfiguration` for packager config
- */
-export function handleChangeConfiguration(event: vscode.ConfigurationChangeEvent, nodeDependenciesProvider: NodeDependenciesProvider) {
-  // do not bother to refresh the deps list, if the packager config does not changed
-  if (event.affectsConfiguration(configs.packager.root))
-    nodeDependenciesProvider.refresh()
-}
-
-/**
- * update the `package.json` dependencies and execute install command
- */
-async function updatePackageJsonDepsAndRunInstall(packageJsonUri: vscode.Uri, packageJsonContent: PackageJson) {
-  const contentBuffer = Buffer.from(JSON.stringify(packageJsonContent, null, 2))
-  // Write the updated content back to package.json
-  await vscode.workspace.fs.writeFile(packageJsonUri, contentBuffer)
-
-  // detect user package manager
-  const packageManager = await detectPackageManager()
-  const cmd = `${packageManager} install`
-  // run install
-  executeTerminalCommand(cmd)
-}
-
-/**
- * A tree item is an UI element of the tree.
+ * Node Dependencies tree item is an UI element of the tree.
  *
  * - `description` format -> `(dev) ^1.0.0` or `^1.0.0` or `^1.0.0 -> 1.1.0`
  */
@@ -88,6 +61,9 @@ export class DependencyTreeItem extends vscode.TreeItem {
   }
 }
 
+/**
+ * Node Dependencies tree data provider
+ */
 export class NodeDependenciesProvider implements vscode.TreeDataProvider<DependencyTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<DependencyTreeItem | undefined | null | void>()
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event
@@ -324,14 +300,14 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   /**
    * notify all subscribers of the event from "onDidChangeTreeData"
    */
-  public refresh() {
+  public refreshCommand() {
     this._onDidChangeTreeData.fire()
   }
 
   /**
    * open/link the selected dependency to the external NPM website documentation
    */
-  public async link(dep?: DependencyTreeItem) {
+  public async linkCommand(dep?: DependencyTreeItem) {
     if (!dep) {
       vscode.window.showInformationMessage('This command can not be invoked directly')
       return
@@ -348,7 +324,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
    *
    * NOTE: should only run if the selected dependency is the root "dependencies" / "devDependencies"
    */
-  public async remove(dep?: DependencyTreeItem) {
+  public async removeCommand(dep?: DependencyTreeItem) {
     if (!dep) {
       vscode.window.showInformationMessage('This command can not be invoked directly')
       return
@@ -373,7 +349,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     }
 
     executeTerminalCommand(cmd)
-    this.refresh()
+    this.refreshCommand()
   }
 
   /**
@@ -381,7 +357,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
    *
    * NOTE: should be displayed & clickable, if there are at least 1 updateable dependencies
    */
-  public async updateAll() {
+  public async updateAllCommand() {
     const rootDeps = await this.getChildren()
     const updateableRootDeps = rootDeps.filter(dep => updateableContextValues.includes(dep.contextValue as UpdateableDepType))
 
@@ -415,8 +391,8 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
         packageJsonContent[depTypeToUpdate]![dep.label] = updatedVersion
       }
 
-      await updatePackageJsonDepsAndRunInstall(packageJsonUri, packageJsonContent)
-      this.refresh()
+      await Packager.updatePackageJsonDepsAndRunInstall(packageJsonUri, packageJsonContent)
+      this.refreshCommand()
     })
   }
 
@@ -425,7 +401,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
    *
    * NOTE: should only run if the selected dependency is the root AND updateable
    */
-  public async updateSingle(dep?: DependencyTreeItem) {
+  public async updateSingleCommand(dep?: DependencyTreeItem) {
     if (!dep) {
       vscode.window.showInformationMessage('This command can not be invoked directly')
       return
@@ -451,7 +427,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     // update the affected dep version from `packageJsonContent`
     packageJsonContent[depTypeToUpdate]![dep.label] = updatedVersion
 
-    await updatePackageJsonDepsAndRunInstall(packageJsonUri, packageJsonContent)
-    this.refresh()
+    await Packager.updatePackageJsonDepsAndRunInstall(packageJsonUri, packageJsonContent)
+    this.refreshCommand()
   }
 }

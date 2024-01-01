@@ -180,3 +180,11 @@ export function createStatusBarItem(options?: Partial<Pick<vscode.StatusBarItem,
 
   return statusBarItem
 };
+
+/**
+ * initialize `package.json` file in the root directory
+ */
+export function executeInitPackageJson() {
+  const cmd = 'npm init --yes'
+  executeTerminalCommand(cmd)
+}

@@ -1,7 +1,5 @@
 import vscode from 'vscode'
-import { initCommands as initPackagerCommands } from './commands/packager'
 import { disposables as delinerDisposables } from './commands/deliner'
-import { NodeDependenciesProvider, handleChangeConfiguration as handleChangeConfigurationPackager } from './utils/packager'
 import { Colorize } from './modules/colorize'
 import { commandIds as colorizeCommandIds } from './constants/colorize'
 import { Highlight } from './modules/highlight'
@@ -12,6 +10,12 @@ import { Logger } from './modules/logger'
 import { commandIds as loggerCommandIds } from './constants/logger'
 import { Region } from './modules/region'
 import { commandIds as regionCommandIds } from './constants/region'
+import { views } from './constants/config'
+import { commandIds as commonCommandIds } from './constants/common'
+import { executeInitPackageJson } from './utils/helper'
+import { commandIds as packagerCommandIds } from './constants/packager'
+import type { DependencyTreeItem } from './modules/packager'
+import { NodeDependenciesProvider, Packager } from './modules/packager'
 
 export async function activate(context: vscode.ExtensionContext) {
   const highlight = new Highlight()
@@ -24,7 +28,6 @@ export async function activate(context: vscode.ExtensionContext) {
   highlight.init()
   // init "packager" providers
   const nodeDependenciesProvider = new NodeDependenciesProvider()
-  const packagerDisposables = initPackagerCommands(nodeDependenciesProvider)
 
   // trigger update "highlight" and "colorize" for the first time
   if (vscode.window.activeTextEditor) {
@@ -100,6 +103,40 @@ export async function activate(context: vscode.ExtensionContext) {
     ),
   ]
 
+  const packagerDisposables = [
+    vscode.window.registerTreeDataProvider(
+      views.veco_packager,
+      nodeDependenciesProvider,
+    ),
+    vscode.commands.registerCommand(
+      packagerCommandIds.refreshEntry,
+      () => nodeDependenciesProvider.refreshCommand(),
+    ),
+    vscode.commands.registerCommand(
+      packagerCommandIds.link,
+      (dep?: DependencyTreeItem) => nodeDependenciesProvider.linkCommand(dep),
+    ),
+    vscode.commands.registerCommand(
+      packagerCommandIds.remove,
+      (dep?: DependencyTreeItem) => nodeDependenciesProvider.removeCommand(dep),
+    ),
+    vscode.commands.registerCommand(
+      packagerCommandIds.updateAll,
+      () => nodeDependenciesProvider.updateAllCommand(),
+    ),
+    vscode.commands.registerCommand(
+      packagerCommandIds.updateSingle,
+      (dep?: DependencyTreeItem) => nodeDependenciesProvider.updateSingleCommand(dep),
+    ),
+  ]
+
+  const commonDisposables = [
+    vscode.commands.registerCommand(
+      commonCommandIds.initPackageJson,
+      () => executeInitPackageJson(),
+    ),
+  ]
+
   const listenerDisposables = [
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       if (!editor)
@@ -124,7 +161,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration((event) => {
       highlight.handleChangeConfiguration(event)
       colorize.handleChangeConfiguration(event)
-      handleChangeConfigurationPackager(event, nodeDependenciesProvider)
+      Packager.handleChangeConfiguration(event, nodeDependenciesProvider)
     }),
   ]
 
@@ -136,6 +173,7 @@ export async function activate(context: vscode.ExtensionContext) {
     ...regionDisposables,
     ...packagerDisposables,
     ...delinerDisposables,
+    ...commonDisposables,
     ...listenerDisposables,
   )
 }
