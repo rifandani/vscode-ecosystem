@@ -4,7 +4,7 @@ import vscode from 'vscode'
 import type { PackageJson } from 'type-fest'
 import semver from 'semver'
 import { type PackagerDefaultConfig, configs } from '../constants/config'
-import { detectPackageManager, executeCommand } from './helper'
+import { detectPackageManager, executeTerminalCommand } from './helper'
 import { getPackagerConfig } from './config'
 import { jsdelivrApi } from './http'
 
@@ -60,7 +60,7 @@ async function updatePackageJsonDepsAndRunInstall(packageJsonUri: vscode.Uri, pa
   const packageManager = await detectPackageManager()
   const cmd = `${packageManager} install`
   // run install
-  executeCommand(cmd)
+  executeTerminalCommand(cmd)
 }
 
 /**
@@ -372,7 +372,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
         break
     }
 
-    executeCommand(cmd)
+    executeTerminalCommand(cmd)
     this.refresh()
   }
 

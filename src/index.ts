@@ -1,21 +1,19 @@
 import vscode from 'vscode'
-import { disposables as highlightDisposables } from './commands/highlight'
 import { disposables as fileNestingDisposables } from './commands/file-nesting'
 import { disposables as loggerDisposables } from './commands/logger'
 import { disposables as regionDisposables } from './commands/region'
 import { initCommands as initPackagerCommands } from './commands/packager'
 import { disposables as delinerDisposables } from './commands/deliner'
-import { handleChangeConfiguration as handleChangeConfigurationHighlight, init as initHighlight, triggerUpdateHighlight } from './utils/highlight'
 import { NodeDependenciesProvider, handleChangeConfiguration as handleChangeConfigurationPackager } from './utils/packager'
-import { diagnostics } from './constants/globals'
 import { Colorize } from './modules/colorize'
 import { commandIds as colorizeCommandIds } from './constants/colorize'
+import { Highlight } from './modules/highlight'
+import { commandIds as highlightCommandIds } from './constants/highlight'
 
 export async function activate(context: vscode.ExtensionContext) {
   const colorize = new Colorize()
-
-  // initialize all necessary things for "highlight"
-  initHighlight()
+  const highlight = new Highlight()
+  highlight.init()
 
   // initialize all necessary things for "packager"
   const nodeDependenciesProvider = new NodeDependenciesProvider()
@@ -23,9 +21,25 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // trigger update "highlight" & "colorize" for the first time
   if (vscode.window.activeTextEditor) {
-    triggerUpdateHighlight()
+    highlight.triggerUpdateHighlight()
     colorize.triggerUpdateColorize()
   }
+
+  const highlightDisposables = [
+    highlight.diagnostic,
+    vscode.commands.registerCommand(
+      highlightCommandIds.toggleEnabled,
+      () => highlight.toggleEnabledCommand(),
+    ),
+    vscode.commands.registerCommand(
+      highlightCommandIds.listAnnotations,
+      () => highlight.listAnnotationsCommand(),
+    ),
+    vscode.commands.registerCommand(
+      highlightCommandIds.showOutputChannel,
+      () => highlight.showOutputChannelCommand(),
+    ),
+  ]
 
   const colorizeDisposables = [
     vscode.commands.registerCommand(
@@ -39,7 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
       if (!editor)
         return
 
-      triggerUpdateHighlight()
+      highlight.triggerUpdateHighlight()
       colorize.triggerUpdateColorize()
     }),
 
@@ -47,17 +61,16 @@ export async function activate(context: vscode.ExtensionContext) {
       if (!vscode.window.activeTextEditor || vscode.window.activeTextEditor.document !== event.document)
         return
 
-      triggerUpdateHighlight()
+      highlight.triggerUpdateHighlight()
       colorize.triggerUpdateColorize()
     }),
 
     vscode.workspace.onDidCloseTextDocument((event) => {
-      // reset diagnostic "highlight" for that specific file
-      diagnostics.highlight.set(event.uri, [])
+      highlight.resetDiagnostic(event.uri)
     }),
 
     vscode.workspace.onDidChangeConfiguration((event) => {
-      handleChangeConfigurationHighlight(event)
+      highlight.handleChangeConfiguration(event)
       colorize.handleChangeConfiguration(event)
       handleChangeConfigurationPackager(event, nodeDependenciesProvider)
     }),
