@@ -1,5 +1,4 @@
 import vscode from 'vscode'
-import { disposables as delinerDisposables } from './commands/deliner'
 import { Colorize } from './modules/colorize'
 import { commandIds as colorizeCommandIds } from './constants/colorize'
 import { Highlight } from './modules/highlight'
@@ -16,6 +15,8 @@ import { executeInitPackageJson } from './utils/helper'
 import { commandIds as packagerCommandIds } from './constants/packager'
 import type { DependencyTreeItem } from './modules/packager'
 import { NodeDependenciesProvider, Packager } from './modules/packager'
+import { commandIds as delinerCommandIds } from './constants/deliner'
+import { Deliner } from './modules/deliner'
 
 export async function activate(context: vscode.ExtensionContext) {
   const highlight = new Highlight()
@@ -126,6 +127,13 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand(
       packagerCommandIds.updateSingle,
       (dep?: DependencyTreeItem) => nodeDependenciesProvider.updateSingleCommand(dep),
+    ),
+  ]
+
+  const delinerDisposables = [
+    vscode.commands.registerCommand(
+      delinerCommandIds.deleteAll,
+      () => Deliner.deleteAllAcrossWorkspace(),
     ),
   ]
 
