@@ -19,11 +19,11 @@
     "highlight",
     "logger",
     "region",
-    "snippet"
+    "snippet",
+    "dependencies"
   ],
   "categories": [
-    "Other",
-    "Snippets"
+    "Other"
   ],
   "main": "./dist/index.js",
   "icon": "res/panda.png",
@@ -358,19 +358,19 @@
     "snippets": [
       {
         "language": "javascript",
-        "path": "./src/snippets/react.json"
+        "path": "./snippets/react.json"
       },
       {
         "language": "javascriptreact",
-        "path": "./src/snippets/react.json"
+        "path": "./snippets/react.json"
       },
       {
         "language": "typescript",
-        "path": "./src/snippets/react.json"
+        "path": "./snippets/react.json"
       },
       {
         "language": "typescriptreact",
-        "path": "./src/snippets/react.json"
+        "path": "./snippets/react.json"
       }
     ],
     "commands": [
@@ -575,7 +575,7 @@
     "lint:fix": "eslint . --fix",
     "test": "vitest",
     "dev": "nr build --watch",
-    "build": "tsup src/index.ts --external vscode",
+    "build": "tsup",
     "vscode:package": "vsce package --no-dependencies",
     "vscode:prepublish": "nr build",
     "vscode:publish": "vsce publish --no-dependencies",
