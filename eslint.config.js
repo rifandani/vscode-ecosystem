@@ -5,6 +5,8 @@ module.exports = antfu(
   {
     ignores: [
       // eslint ignore globs here
+      'webview-ui/build/*',
+      'webview-ui/src/presets/*',
     ],
   },
   {

@@ -3,7 +3,7 @@ import { template } from '@rifandani/nxact-yutiriti'
 import vscode from 'vscode'
 import { excludedFiles, includedFiles, regionRegex } from '../constants/region'
 
-export class Region {
+class Region {
   /**
    * get language comment format for markers, based on the input `languageId`
    */
@@ -225,3 +225,6 @@ export class Region {
     })
   }
 }
+
+// exports class singleton to prevent multiple invocations
+export const region = new Region()

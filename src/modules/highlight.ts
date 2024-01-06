@@ -2,9 +2,9 @@ import os from 'node:os'
 import vscode from 'vscode'
 import { objectify } from '@rifandani/nxact-yutiriti'
 import type { KeywordObject } from '../constants/config'
-import { configs, constants, highlightDefaultConfig } from '../constants/config'
+import { configs, highlightDefaultConfig } from '../constants/config'
 import { getHighlightConfig } from '../utils/config'
-import { createStatusBarItem, escapeRegExp, escapeRegExpGroups, getPaths, isFileNameOk, to } from '../utils/helper'
+import { escapeRegExp, escapeRegExpGroups, getContent, getPaths, isFileNameOk, to } from '../utils/helper'
 import { commandIds } from '../constants/highlight'
 
 // #region INTERFACES
@@ -19,30 +19,24 @@ export interface HighlightAnnotation {
 }
 
 export interface HighlightState {
-  timeout: null | NodeJS.Timeout
-  styleForRegExp: null | vscode.DecorationRenderOptions
-  assembledData: null | Record<PropertyKey, KeywordObject>
-  decorationTypes: Record<PropertyKey, vscode.TextEditorDecorationType>
-  pattern: string | RegExp
-  annotationList: HighlightAnnotation[]
-  // from vscode instance
-  statusBarItem: null | vscode.StatusBarItem
-  outputChannel: null | vscode.OutputChannel
-  diagnostic: vscode.DiagnosticCollection
+  _timeout: null | NodeJS.Timeout
+  _styleForRegExp: null | vscode.DecorationRenderOptions
+  _assembledData: null | Record<PropertyKey, KeywordObject>
+  _decorationTypes: Record<PropertyKey, vscode.TextEditorDecorationType>
+  _pattern: string | RegExp
+  _annotationList: HighlightAnnotation[]
 }
 // #endregion
 
 const zapIcon = '$(zap)'
 const defaultIcon = '$(checklist)'
+const warnIcon = '$(warning)'
 const errorIcon = '$(error)'
-const defaultMsg = '0 Annotations'
-const errorMsg = 'Error Listing Annotations'
-const statusBarItemTooltip = 'List annotations'
-const outputChannelName = 'Veco - Highlight'
+const errorMsg = 'Error listing annotations'
 
-export class Highlight {
-  private _timeout: HighlightState['timeout'] = null
-  private _styleForRegExp: HighlightState['styleForRegExp'] = null
+class Highlight {
+  private _timeout: HighlightState['_timeout'] = null
+  private _styleForRegExp: HighlightState['_styleForRegExp'] = null
   /**
    * @example
    *
@@ -51,26 +45,23 @@ export class Highlight {
    *     color: "#fff",
    *     backgroundColor: "rgba(27,154,170,1)",
    *     text: "NOTE:",
-   *     diagnosticSeverity: "information",
    *     overviewRulerColor: "rgba(27,154,170,0.8)",
    *   },
    *   "TODO:": {
    *     color: "#fff",
    *     backgroundColor: "rgba(255,197,61,1)",
    *     text: "TODO:",
-   *     diagnosticSeverity: "warning",
    *     overviewRulerColor: "rgba(255,197,61,0.8)",
    *   },
    *   "FIXME:": {
    *     color: "#fff",
    *     backgroundColor: "rgba(239,71,110,1)",
    *     text: "FIXME:",
-   *     diagnosticSeverity: "error",
    *     overviewRulerColor: "rgba(239,71,110,0.8)",
    *   },
    * }
    */
-  private _assembledData: HighlightState['assembledData'] = null
+  private _assembledData: HighlightState['_assembledData'] = null
   /**
    * @example
    *
@@ -89,25 +80,29 @@ export class Highlight {
    *   },
    * }
    */
-  private _decorationTypes: HighlightState['decorationTypes'] = {}
+  private _decorationTypes: HighlightState['_decorationTypes'] = {}
   /**
    * @example
    *
    * /(NOTE:)|(TODO:)|(FIXME:)/g
    */
-  private _pattern: HighlightState['pattern'] = ''
-  private _annotationList: HighlightState['annotationList'] = []
-  // below states are from vscode instance
-  private _statusBarItem: HighlightState['statusBarItem'] = null
-  private _outputChannel: HighlightState['outputChannel'] = null
-  private _diagnostic = vscode.languages.createDiagnosticCollection(configs.highlight.root)
+  private _pattern: HighlightState['_pattern'] = ''
+  private _annotationList: HighlightState['_annotationList'] = []
+  private _logOutputChannel: vscode.LogOutputChannel
+  private _statusBarItem: vscode.StatusBarItem
 
-  public get diagnostic() {
-    return this._diagnostic
+  constructor() {
+    // instantiate log output channel and status bar item
+    this._logOutputChannel = vscode.window.createOutputChannel('Veco - Highlight', { log: true })
+    this._statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 1)
+    this._statusBarItem.text = `${defaultIcon} 0 Annotations`
+    this._statusBarItem.tooltip = 'Click to show list annotations'
+    this._statusBarItem.command = commandIds.showLogOutputChannel
   }
 
   /**
-   * based on the user config `defaultStyle`, `isCaseSensitive`, and `keywords`
+   * Only used once in `init` function.
+   * Based on the user config `defaultStyle`, `isCaseSensitive`, and `keywords`.
    *
    * returns object like this:
    *
@@ -115,7 +110,6 @@ export class Highlight {
    * {
    *   "NOTE:": {
    *     text: "NOTE:",
-   *     diagnosticSeverity: "information",
    *     color: "#fff",
    *     backgroundColor: "rgba(27,154,170,1)",
    *     overviewRulerColor: "rgba(27,154,170,0.8)",
@@ -124,26 +118,23 @@ export class Highlight {
    * ```
    */
   private getAssembledData() {
-    const {
-      defaultStyle: userDefaultStyle,
-      isCaseSensitive,
-      keywords,
-    } = getHighlightConfig()
+    this._logOutputChannel.trace(`Operation \`getAssembledData\` start`)
 
-    // `result` and `defaultKeywords` type looks the same
+    const { defaultStyle: userDefaultStyle, isCaseSensitive, keywords } = getHighlightConfig()
+    // `defaultKeywords` and `result` type looks the same
     const defaultKeywords = objectify(highlightDefaultConfig.keywords, _keyword => _keyword.text)
     const result: Record<PropertyKey, KeywordObject> = {}
     const regex: Array<string | RegExp> = []
     let reg: string | RegExp
 
     // modifying `result` in each iteration
-    keywords.forEach((val) => {
+    for (const val of keywords) {
       let keyword = typeof val === 'string' ? { text: val } : val
       let text = keyword.text
 
       // in case of the text is empty string
       if (!text)
-        return
+        continue
 
       // in case of the text is not case sensitive
       if (!isCaseSensitive)
@@ -156,43 +147,38 @@ export class Highlight {
       if (keyword.regex)
         regex.push(keyword.regex.pattern || text)
 
-      keyword.diagnosticSeverity = keyword?.diagnosticSeverity ?? 'none'
       result[text] = Object.assign({}, highlightDefaultConfig.defaultStyle, userDefaultStyle, keyword)
-    })
+    }
 
     if (regex.length > 0)
-    // join the regex array
+      // join the regex array
       reg = regex.join('|')
 
     // Don't override existing regex keywords with matching defaults
     const regMatchKeyword = Object.keys(defaultKeywords).filter(_keyword => !((reg && _keyword.match(new RegExp(reg)))))
-    regMatchKeyword.forEach((_key) => {
+    for (const _key of regMatchKeyword) {
       if (!result[_key])
         result[_key] = Object.assign({}, highlightDefaultConfig.defaultStyle, userDefaultStyle, defaultKeywords[_key])
-    })
+    }
 
+    this._logOutputChannel.trace(`Operation \`getAssembledData\` end`)
     return result
   }
-
-  /**
-   * returns the substring at the specified location
-   */
-  private getContent(lineText: string, match: RegExpExecArray | RegExpMatchArray) {
-    return lineText.substring(lineText.indexOf(match[0]), lineText.length)
-  };
 
   /**
    * logic to highlight the annotations
    */
   private updateDecorations() {
-    const { enabled, enableDiagnostics, isCaseSensitive, keywordsPattern, include, exclude } = getHighlightConfig()
+    this._logOutputChannel.trace(`Operation \`updateDecorations\` start`)
 
-    if (!vscode.window.activeTextEditor || !isFileNameOk({ include, exclude, filename: vscode.window.activeTextEditor.document.fileName }))
+    const { enabled, isCaseSensitive, keywordsPattern, include, exclude } = getHighlightConfig()
+
+    if (!vscode.window.activeTextEditor || !isFileNameOk({ include, exclude, filename: vscode.window.activeTextEditor.document.fileName })) {
+      this._logOutputChannel.debug(`Return early. Filename is not ok`)
       return
+    }
 
-    const postDiagnostics = !!enabled && !!enableDiagnostics
     const matches: Record<PropertyKey, Array<{ range: vscode.Range }>> = {}
-    const problems: vscode.Diagnostic[] = []
     const text = vscode.window.activeTextEditor.document.getText()
     let match = (this._pattern as RegExp).exec(text)
 
@@ -207,22 +193,6 @@ export class Highlight {
       const patternIndex = match.slice(1).indexOf(match[0])
       // `NOTE:` or `TODO:` or etc...
       let matchedValue = Object.keys(this._decorationTypes)[patternIndex]
-
-      if (postDiagnostics) {
-        const lineText = vscode.window.activeTextEditor.document.lineAt(decoration.range.start).text
-        let message = this.getContent(lineText, match)
-
-        if (message.length > 160)
-          // take only first 160 chars
-          message = `${message.substring(0, 160).trim()}...`
-
-        const severity = this._assembledData?.[matchedValue]?.diagnosticSeverity
-        if (severity) {
-          // creates diagnostic
-          const problem = new vscode.Diagnostic(decoration.range, message, constants.severityMapper[severity])
-          problems.push(problem)
-        }
-      }
 
       if (!isCaseSensitive)
         matchedValue = matchedValue.toUpperCase()
@@ -240,60 +210,251 @@ export class Highlight {
       match = (this._pattern as RegExp).exec(text)
     }
 
-    Object.keys(this._decorationTypes).forEach((_key) => {
+    for (const _key in this._decorationTypes) {
       const rangeOption = enabled && matches[_key] ? matches[_key] : []
       const decorationType = this._decorationTypes[_key]
 
       // NOTE: the actual logic to highlight
       vscode.window.activeTextEditor!.setDecorations(decorationType, rangeOption)
-    })
+    }
 
-    if (this._diagnostic)
-      this._diagnostic.set(vscode.window.activeTextEditor.document.uri, problems)
+    this._logOutputChannel.trace(`Operation \`updateDecorations\` end`)
   }
 
   /**
-   * set status bar item text and tooltip
+   * search annotations in a specific file, line by line
+   *
+   * - set `this._annotationList`
    */
-  private setStatusMsg(icon: string, message: string | number, tooltip?: string | vscode.MarkdownString) {
-    if (!this._statusBarItem)
-      return
+  private searchAnnotationsInFile(file: vscode.TextDocument, annotations: Record<PropertyKey, unknown[]>, pattern: string | RegExp) {
+    this._logOutputChannel.trace(`Operation \`searchAnnotationInFile\` start`)
 
-    if (tooltip)
-      this._statusBarItem.tooltip = tooltip
+    // example "file:///Users/rizeki.rifandani/Desktop/dev/react/react-app/src/index.d.ts"
+    const fileUri = file.uri.toString()
+    // take only first 7 chars, without "file:///"
+    const pathWithoutFile = fileUri.substring(7, fileUri.length)
 
-    this._statusBarItem.text = `${icon} ${message}`
+    for (let lineNum = 0; lineNum < file.lineCount; lineNum++) {
+      const lineText = file.lineAt(lineNum).text
+      const match = lineText.match(pattern)
+
+      if (!match)
+        continue
+
+      if (!Object.hasOwn(annotations, pathWithoutFile))
+        annotations[pathWithoutFile] = []
+
+      let label = getContent(lineText, match)
+      if (label.length > 500)
+        label = `${label.substring(0, 500).trim()}...`
+
+      const rootPath = `${vscode.workspace.workspaceFolders?.[0] ?? vscode.workspace.rootPath}/`
+      const outputFile = pathWithoutFile.replace(rootPath, '')
+      const startCol = lineText.indexOf(match[0])
+      const endCol = lineText.length
+      const detail = `${outputFile} ${lineNum + 1}:${startCol + 1}`
+      const annotation = {
+        startCol,
+        endCol,
+        label,
+        detail,
+        lineNum,
+        uri: fileUri,
+        fileName: pathWithoutFile,
+      }
+
+      // update `this._annotationList` array
+      this._annotationList.push(annotation)
+      annotations[pathWithoutFile].push(annotation)
+    }
+
+    this._logOutputChannel.trace(`Operation \`searchAnnotationInFile\` end`)
+  }
+
+  /**
+   * find files across all the workspace folders based on the `include` / `exclude` config.
+   */
+  private async searchAnnotationsInWorkspace(pattern: string | RegExp) {
+    this._logOutputChannel.trace(`Operation \`searchAnnotationsAcrossWorkspace\` start`)
+
+    const { include, exclude, maxFilesForSearch } = getHighlightConfig()
+    const includePattern = getPaths(include) || '{**/*}'
+    const excludePattern = getPaths(exclude)
+    const statusMsg = ` Searching...`
+
+    // set status bar item text
     this._statusBarItem.show()
+    this._statusBarItem.text = `${zapIcon} ${statusMsg}`
+
+    // actual use of "maxFilesForSearch" config
+    // find files across all workspace folders in the workspace.
+    const [files, err] = await to(vscode.workspace.findFiles(includePattern, excludePattern, maxFilesForSearch))
+
+    // on error finding files
+    if (err) {
+      this._statusBarItem.text = `${errorIcon} ${errorMsg}`
+      this._logOutputChannel.error('Return early. Error finding files', err)
+      return
+    }
+
+    // on empty files
+    if (!files || files.length === 0) {
+      const warnMsg = 'No files found'
+      this._statusBarItem.text = `${warnIcon} ${warnMsg}`
+      this._logOutputChannel.warn(`Return early. ${warnMsg}`, { includePattern, excludePattern })
+      return
+    }
+
+    let times = 0
+    let progress = 0
+    const totalFiles = files.length
+    const annotations = {}
+
+    const file_iterated = () => {
+      times += 1
+      progress = Math.floor(times / totalFiles * 100)
+
+      // set status bar item text progress
+      this._statusBarItem.text = `${zapIcon} ${progress}% ${statusMsg}`
+
+      if (times === totalFiles) {
+        const foundLength = this._annotationList.length
+        const msg = `${foundLength} annotations found`
+
+        this._statusBarItem.text = `${defaultIcon} ${foundLength} annotations`
+        this._statusBarItem.tooltip = msg
+        this._logOutputChannel.debug(msg)
+        this.showLogOutputChannelCommand()
+      }
+    }
+
+    for (let i = 0; i < totalFiles; i++) {
+      // opens a document.
+      // Will return early if this document is already open.
+      // Otherwise the document is loaded and the didOpen-event fires.
+      const [file, err] = await to(vscode.workspace.openTextDocument(files[i]))
+
+      if (err) {
+        this._statusBarItem.text = `${errorIcon} ${errorMsg}`
+        this._logOutputChannel.error(`Error opening text document for ${files[i].fsPath}`, err)
+        file_iterated()
+        continue
+      }
+
+      this.searchAnnotationsInFile(file!, annotations, pattern)
+      file_iterated()
+    }
+
+    this._logOutputChannel.trace(`Operation \`searchAnnotationsAcrossWorkspace\` end`)
   }
 
   /**
-   * set error message to status bar item
+   * init internal states:
+   *
+   * - set `this._statusBarItem`
+   * - set `this._outputChannel`
+   * - set `this._pattern`
+   *
+   * if `keywordsPattern` is NOT empty:
+   *
+   * - set `this._styleForRegExp`
+   *
+   * if `keywordsPattern` is empty:
+   *
+   * - set `this._assembledData`
+   * - set `this._decorationTypes`
    */
-  private errorHandler(err: unknown) {
-    this.setStatusMsg(errorIcon, errorMsg)
-    console.error('Veco - Highlight Error', err)
+  public init() {
+    this._logOutputChannel.trace(`Operation \`init\` start`)
+
+    const { defaultStyle: userDefaultStyle, keywordsPattern, isCaseSensitive } = getHighlightConfig()
+
+    if ((keywordsPattern as string).trim()) {
+      this._logOutputChannel.debug(`Proceed with defined \`keywordsPattern\``)
+
+      // construct `_styleForRegExp`
+      this._styleForRegExp = {
+        ...highlightDefaultConfig.defaultStyle,
+        ...userDefaultStyle,
+        overviewRulerLane: vscode.OverviewRulerLane.Right,
+      }
+      // set the `_pattern`, but as string
+      this._pattern = keywordsPattern
+    }
+    else {
+      this._logOutputChannel.debug(`Proceed with empty \`keywordsPattern\``)
+
+      // set the `_assembledData`
+      this._assembledData = this.getAssembledData()
+
+      for (const _key in this._assembledData) {
+        const mergedStyle = {
+          overviewRulerLane: vscode.OverviewRulerLane.Right,
+          ...this._assembledData![_key],
+        }
+
+        if (!mergedStyle.overviewRulerColor) {
+          // use `backgroundColor` as the default `overviewRulerColor` if not specified by the user setting
+          mergedStyle.overviewRulerColor = mergedStyle.backgroundColor
+        }
+
+        // set the `decorationTypes` for a specific `_key`
+        (this._decorationTypes as Record<PropertyKey, vscode.TextEditorDecorationType>)[_key] = vscode.window.createTextEditorDecorationType(mergedStyle)
+      }
+
+      // set the `pattern` still as string, give each keyword a group in the pattern
+      this._pattern = Object.keys(this._assembledData).map((_key) => {
+        // if `regex` is not exists in `keywords` user defined config
+        if (this._assembledData && !this._assembledData[_key].regex)
+          return `(${escapeRegExp(_key)})`
+
+        const pattern = this._assembledData?.[_key].regex?.pattern || _key
+
+        // ignore unescaped parantheses to avoid messing with our groups
+        return `(${escapeRegExpGroups(pattern as string)})`
+      }).join('|')
+    }
+
+    // override the `pattern` string, and convert it into a regex
+    this._pattern = new RegExp((this._pattern as string), isCaseSensitive ? 'g' : 'gi')
+    this._logOutputChannel.trace(`Operation \`init\` end`)
+  }
+
+  /**
+   * clear `this._timeout` state if it exists & call `updateDecorations` in `setTimeout`
+   */
+  public triggerUpdateHighlight() {
+    if (this._timeout)
+      clearTimeout(this._timeout)
+
+    this._timeout = setTimeout(() => this.updateDecorations(), 0)
   }
 
   /**
    * iterate over `annotationList`, append it to the `this._outputChannel` line, and finally show the output channel
    */
-  public showOutputChannelCommand() {
-    if (!this._outputChannel)
-      return
+  public showLogOutputChannelCommand() {
+    this._logOutputChannel.trace(`Operation \`showLogOutputChannelCommand\` start`)
 
-    // if there are no data/annotations found
-    if (this._annotationList.length === 0) {
-      vscode.window.showInformationMessage('No results (Not included file types and individual files are not searched)')
+    const { enabled, toggleURI } = getHighlightConfig()
+
+    // if module is not enabled
+    if (!enabled) {
+      this._logOutputChannel.warn(`Return early. User did not enable the config`)
+      vscode.window.showWarningMessage('Please enable the highlight module first')
       return
     }
 
-    const { toggleURI } = getHighlightConfig()
+    // if there are no annotations found
+    if (!this._annotationList.length) {
+      this._logOutputChannel.warn(`Return early. Please call \`listAnnotationsCommand\` first to populate \`_annotationList\``)
+      vscode.window.showWarningMessage('No results (not included file types and individual files are not searched)')
+      return
+    }
+
     const platform = os.platform()
 
-    // clear previous output
-    this._outputChannel.clear()
-
-    this._annotationList.forEach((annotation, idx) => {
+    for (const [idx, annotation] of this._annotationList.entries()) {
       /**
        * due to an issue of vscode (https://github.com/Microsoft/vscode/issues/586),
        * in order to make file path clickable within the output channel,
@@ -317,232 +478,21 @@ export class Highlight {
       }
 
       // append the texts to the output channel
-      this._outputChannel!.appendLine(patterns[patternType])
-      this._outputChannel!.appendLine(comment)
-    })
+      this._logOutputChannel.appendLine(patterns[patternType])
+      this._logOutputChannel.appendLine(comment)
+    }
 
     // finally, reveal the output in the UI
-    this._outputChannel.show()
-  }
-
-  /**
-   * search annotations in a specific file, line by line
-   *
-   * - set `this._annotationList`
-   */
-  private searchAnnotationInFile(file: vscode.TextDocument, annotations: Record<PropertyKey, unknown[]>, pattern: string | RegExp) {
-    // example "file:///Users/rizeki.rifandani/Desktop/dev/react/react-app/src/index.d.ts"
-    const fileUri = file.uri.toString()
-    // take only first 7 chars, without "file:///"
-    const pathWithoutFile = fileUri.substring(7, fileUri.length)
-
-    for (let lineNum = 0; lineNum < file.lineCount; lineNum++) {
-      const lineText = file.lineAt(lineNum).text
-      const match = lineText.match(pattern)
-
-      if (!match)
-        continue
-
-      if (!Object.prototype.hasOwnProperty.call(annotations, pathWithoutFile))
-        annotations[pathWithoutFile] = []
-
-      let label = this.getContent(lineText, match)
-      if (label.length > 500)
-        label = `${label.substring(0, 500).trim()}...`
-
-      const rootPath = `${vscode.workspace.workspaceFolders?.[0] ?? vscode.workspace.rootPath}/`
-      const outputFile = pathWithoutFile.replace(rootPath, '')
-      const startCol = lineText.indexOf(match[0])
-      const endCol = lineText.length
-      const detail = `${outputFile} ${lineNum + 1}:${startCol + 1}`
-
-      const annotation = {
-        startCol,
-        endCol,
-        label,
-        detail,
-        lineNum,
-        uri: fileUri,
-        fileName: pathWithoutFile,
-      }
-
-      // update `annotationList` array
-      this._annotationList.push(annotation)
-      annotations[pathWithoutFile].push(annotation)
-    }
-  }
-
-  /**
-   * find files across all the workspace folders based on the `include` / `exclude` config.
-   */
-  public async searchAnnotations(pattern: string | RegExp) {
-    const { include, exclude, maxFilesForSearch } = getHighlightConfig()
-    const includePattern = getPaths(include) || '{**/*}'
-    const excludePattern = getPaths(exclude)
-    const statusMsg = ` Searching...`
-
-    // set status bar item to "searching"
-    this.setStatusMsg(zapIcon, statusMsg)
-
-    // actual use of "maxFilesForSearch" config
-    // find files across all workspace folders in the workspace.
-    const [files, err] = await to(vscode.workspace.findFiles(includePattern, excludePattern, maxFilesForSearch))
-
-    if (err) {
-      this.errorHandler(err)
-      return
-    }
-
-    if (!files || files.length === 0) {
-      this.errorHandler({ message: 'No files found' })
-      return
-    }
-
-    let times = 0
-    let progress = 0
-    const totalFiles = files.length
-    const annotations = {}
-
-    const file_iterated = () => {
-      times += 1
-      progress = Math.floor(times / totalFiles * 100)
-
-      // set status bar item to "searching"
-      this.setStatusMsg(zapIcon, `${progress}% ${statusMsg}`)
-
-      if (times === totalFiles) {
-        const message = this._annotationList.length
-        const tooltip = `${message} annotations result(s) found`
-
-        this.setStatusMsg(defaultIcon, message, tooltip)
-        this.showOutputChannelCommand()
-      }
-    }
-
-    for (let i = 0; i < totalFiles; i++) {
-      // opens a document.
-      // Will return early if this document is already open.
-      // Otherwise the document is loaded and the didOpen-event fires.
-      const [file, err] = await to(vscode.workspace.openTextDocument(files[i]))
-
-      if (err) {
-        this.errorHandler(err)
-        file_iterated()
-        continue
-      }
-
-      this.searchAnnotationInFile(file!, annotations, pattern)
-      file_iterated()
-    }
-  }
-
-  /**
-   * init internal states:
-   *
-   * - set `this._statusBarItem`
-   * - set `this._outputChannel`
-   * - set `this._pattern`
-   *
-   * if `keywordsPattern` is NOT empty:
-   *
-   * - set `this._styleForRegExp`
-   *
-   * if `keywordsPattern` is empty:
-   *
-   * - set `this._assembledData`
-   * - set `this._decorationTypes`
-   */
-  public init() {
-    const {
-      defaultStyle: userDefaultStyle,
-      keywordsPattern,
-      isCaseSensitive,
-    } = getHighlightConfig()
-
-    if (!this._statusBarItem) {
-      // init status bar item
-      this._statusBarItem = createStatusBarItem({
-        text: `${defaultIcon}${defaultMsg}`,
-        tooltip: statusBarItemTooltip,
-        command: commandIds.showOutputChannel,
-      })
-    }
-
-    if (!this._outputChannel)
-      // init output channel
-      this._outputChannel = vscode.window.createOutputChannel(outputChannelName)
-
-    if ((keywordsPattern as string).trim()) {
-      // set the `styleForRegExp`
-      this._styleForRegExp = {
-        ...highlightDefaultConfig.defaultStyle,
-        ...userDefaultStyle,
-        overviewRulerLane: vscode.OverviewRulerLane.Right,
-      }
-
-      // set the `pattern`, but as string
-      this._pattern = keywordsPattern
-    }
-    else {
-      // set the `assembledData`
-      this._assembledData = this.getAssembledData()
-
-      Object.keys(this._assembledData).forEach((_key) => {
-        const mergedStyle = {
-          overviewRulerLane: vscode.OverviewRulerLane.Right,
-          ...this._assembledData![_key],
-        }
-
-        if (!mergedStyle.overviewRulerColor) {
-        // use `backgroundColor` as the default `overviewRulerColor` if not specified by the user setting
-          mergedStyle.overviewRulerColor = mergedStyle.backgroundColor
-        }
-
-        // set the `decorationTypes` for a specific `_key`
-        (this._decorationTypes as Record<PropertyKey, vscode.TextEditorDecorationType>)[_key] = vscode.window.createTextEditorDecorationType(mergedStyle)
-      })
-
-      // set the `pattern` still as string, give each keyword a group in the pattern
-      this._pattern = Object.keys(this._assembledData).map((_key) => {
-        // if `regex` is not exists in `keywords` user defined config
-        if (this._assembledData && !this._assembledData[_key].regex)
-          return `(${escapeRegExp(_key)})`
-
-        const pattern = this._assembledData?.[_key].regex?.pattern || _key
-
-        // ignore unescaped parantheses to avoid messing with our groups
-        return `(${escapeRegExpGroups(pattern as string)})`
-      }).join('|')
-    }
-
-    // override the `pattern` string, and convert it into a regex
-    this._pattern = new RegExp((this._pattern as string), isCaseSensitive ? 'g' : 'gi')
-  }
-
-  /**
-   * clear `this._timeout` state if it exists & call `updateDecorations` in `setTimeout`
-   */
-  public triggerUpdateHighlight() {
-    if (this._timeout)
-      clearTimeout(this._timeout)
-
-    this._timeout = setTimeout(() => this.updateDecorations(), 0)
-  }
-
-  /**
-   * reset diagnostic for a specific file
-   */
-  public resetDiagnostic(uri: vscode.Uri) {
-    if (this._diagnostic) {
-      // reset diagnostic "highlight" for that specific file uri
-      this._diagnostic.set(uri, [])
-    }
+    this._logOutputChannel.show()
+    this._logOutputChannel.trace(`Operation \`showLogOutputChannelCommand\` end`)
   }
 
   /**
    * toggle enable/disable highlight
    */
   public async toggleEnabledCommand() {
+    this._logOutputChannel.trace(`Operation \`toggleEnabledCommand\` start`)
+
     const { config, enabled } = getHighlightConfig()
 
     // passing `true` as third arguments will updates user settings
@@ -550,27 +500,36 @@ export class Highlight {
 
     if (err) {
       // show error message if failed to update configs
-      const errorMsg = `Error ${enabled ? 'disabling' : 'enabling'} highlight`
-      vscode.window.showErrorMessage(errorMsg)
+      const msg = `Error ${enabled ? 'disabling' : 'enabling'} highlight`
+      this._logOutputChannel.error(`Return early. ${msg}`)
+      vscode.window.showErrorMessage(msg)
+      return
     }
 
     this.triggerUpdateHighlight()
+    this._logOutputChannel.trace(`Operation \`toggleEnabledCommand\` end`)
   }
 
   /**
    * List all user comments/annotations based on the user provided / default settings
    */
   public async listAnnotationsCommand() {
+    this._logOutputChannel.trace(`Operation \`listAnnotationsCommand\` start`)
+
     const { keywordsPattern, isCaseSensitive } = getHighlightConfig()
 
-    // if `keywordsPattern` is empty, then use `this._pattern`
+    // if user provi`keywordsPattern` is NOT empty, then use `this._pattern`
     if ((keywordsPattern as string).trim()) {
-      this.searchAnnotations(this._pattern)
+      this._logOutputChannel.debug(`\`keywordsPattern\` not empty. Search annotations using \`_pattern\``)
+      this.searchAnnotationsInWorkspace(this._pattern)
       return
     }
 
-    if (!this._assembledData)
+    // `_assembledData` should already be defined if we called `init` beforehand
+    if (!this._assembledData) {
+      this._logOutputChannel.warn(`Return early. \`_assembledData\` state is empty. Please call \`init\` before calling this command.`)
       return
+    }
 
     const defaultAnnotationTypes = Object.keys(this._assembledData).map(label => ({
       label,
@@ -579,17 +538,21 @@ export class Highlight {
     const annotationType = await vscode.window.showQuickPick(availableAnnotationTypes)
 
     // if user didn't pick by clicking "escape" or outside of the quick pick
-    if (!annotationType)
+    if (!annotationType) {
+      this._logOutputChannel.debug(`Return early. User did not pick any option`)
       return
+    }
 
     // construct the `searchPattern` regex
     let searchPattern = this._pattern
     if (annotationType.label !== 'ALL') {
+      this._logOutputChannel.debug(`User pick ${annotationType.label} option`)
       annotationType.label = escapeRegExp(annotationType.label)
       searchPattern = new RegExp(annotationType.label, isCaseSensitive ? 'g' : 'gi')
     }
 
-    this.searchAnnotations(searchPattern)
+    this.searchAnnotationsInWorkspace(searchPattern)
+    this._logOutputChannel.trace(`Operation \`listAnnotationsCommand\` end`)
   }
 
   /**
@@ -608,4 +571,15 @@ export class Highlight {
       }
     }
   }
+
+  /**
+   * dispose all subscriptions / listeners
+   */
+  public dispose() {
+    this._logOutputChannel.dispose()
+    this._statusBarItem.dispose()
+  }
 }
+
+// exports class singleton to prevent multiple invocations
+export const highlight = new Highlight()

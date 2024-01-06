@@ -21,7 +21,6 @@ interface HighlightDefaultConfig {
   enabled: boolean
   toggleURI: boolean
   isCaseSensitive: boolean
-  enableDiagnostics: boolean
   maxFilesForSearch: number
   defaultStyle: Partial<vscode.DecorationRenderOptions>
   keywords: Array<Keyword>
@@ -45,10 +44,6 @@ const highlightDefaultConfig = {
    */
   isCaseSensitive: true,
   /**
-   * Enable creating diagnostic entries for open files in the problems view.
-   */
-  enableDiagnostics: false,
-  /**
    * Max files for searching, mostly you don't need to configure this
    */
   maxFilesForSearch: 5120,
@@ -60,21 +55,18 @@ const highlightDefaultConfig = {
   keywords: [
     {
       text: 'NOTE:',
-      diagnosticSeverity: 'information',
       color: '#fff',
       backgroundColor: 'rgba(27,154,170,1)',
       overviewRulerColor: 'rgba(27,154,170,0.8)',
     },
     {
       text: 'TODO:',
-      diagnosticSeverity: 'warning',
       color: '#fff',
       backgroundColor: 'rgba(255,197,61,1)',
       overviewRulerColor: 'rgba(255,197,61,0.8)',
     },
     {
       text: 'FIXME:',
-      diagnosticSeverity: 'error',
       color: '#fff',
       backgroundColor: 'rgba(239,71,110,1)',
       overviewRulerColor: 'rgba(239,71,110,0.8)',
@@ -142,7 +134,6 @@ You can override the look by customizing the detailed settings for each **Keywor
 
 - "text": string: without a defined regex pattern this is the string that will be matched
 - "regex": { pattern: "..." } a regex pattern for what will be matched
-- "diagnosticSeverity": controls whether to show a 'error' | 'warning' | 'information' | 'hint' | 'none' marker in the overview ruler for each instance of this keyword. Appropriate ones will also be shown in the PROBLEMS panel.
 - "color": color name (e.g. "green") or other color code (e.g. "rgba(255,120,0,50)")
 - "backgroundColor": as for `color` above. Note: setting the last parameter to zero (alpha channel) disables the background color.
 - "border": CSS codes (e.g. "1px solid red" or "none")
@@ -173,7 +164,6 @@ An example of a custom configuration, showing a range of the different features:
     // now for a more complex example
     {
       "text": "INFO:", // without a defined regex pattern this is the string that will be matched
-      "diagnosticSeverity": "information",
       "color": "green",
       "backgroundColor": "rgba(0,0,0,0)", // INFO: setting the last parameter to zero (alpha channel) disables the background colour
       "border": "none",
@@ -190,15 +180,13 @@ An example of a custom configuration, showing a range of the different features:
       "color": "red",
       "border": "1px solid red",
       "borderRadius": "2px", // NOTE: use borderRadius along with `border` or you will see nothing change
-      "backgroundColor": "rgba(0,0,0,.2)",
-      "diagnosticSeverity": "warning" // Set diagnostic severity to `none`, `information`, `warning` or `error`
+      "backgroundColor": "rgba(0,0,0,.2)"
     },
     {
       "text": "TODO(string):", // with a regex pattern defined, this setting isn't used, but is useful as a name for this section
       "regex": {
         "pattern": "(?<=^|\"|\\s)TODO(\\(\\w+\\))?:" // this allows for TODO: or TODO(Bob): etc.
       },
-      "diagnosticSeverity": "error",
       "color": "red",
       "border": "1px solid red",
       "borderRadius": "2px", // NOTE: use borderRadius along with `border` or you will see nothing change

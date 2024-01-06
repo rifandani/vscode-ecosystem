@@ -10,7 +10,6 @@ export function getHighlightConfig() {
   const enabled = config.get(configs.highlight.enabled) as boolean
   const toggleURI = config.get(configs.highlight.toggleURI) as boolean
   const isCaseSensitive = config.get(configs.highlight.isCaseSensitive) as boolean
-  const enableDiagnostics = config.get(configs.highlight.enableDiagnostics) as boolean
   const maxFilesForSearch = config.get(configs.highlight.maxFilesForSearch) as number
   const keywords = config.get(configs.highlight.keywords) as HighlightDefaultConfig['keywords']
   const keywordsPattern = config.get(configs.highlight.keywordsPattern) as HighlightDefaultConfig['keywordsPattern']
@@ -21,7 +20,6 @@ export function getHighlightConfig() {
   return {
     config,
     enabled,
-    enableDiagnostics,
     isCaseSensitive,
     keywords,
     keywordsPattern,

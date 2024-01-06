@@ -1,11 +1,11 @@
-// See https://go.microsoft.com/fwlink/?LinkId=733558
-// for the documentation about the tasks.json format
 {
   "version": "2.0.0",
   "tasks": [
     {
       "type": "npm",
+      "label": "dev",
       "script": "dev",
+      "group": "build",
       "isBackground": true,
       "presentation": {
         "reveal": "never"
@@ -19,8 +19,21 @@
             "endsPattern": "Build success"
           }
         }
-      ],
-      "group": "build"
+      ]
+    },
+    {
+      "type": "npm",
+      "label": "build:webview",
+      "script": "build:webview"
+    },
+    {
+      "label": "dev:all",
+      "dependsOrder": "parallel",
+      // using "dev:webview" or "build-watch:webview" will not open another vscode in debug mode, because it's a long time server-running command
+      "dependsOn": [
+        "dev",
+        "build:webview"
+      ]
     }
   ]
 }

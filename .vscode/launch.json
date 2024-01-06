@@ -19,7 +19,7 @@
         "${workspaceFolder}/node_modules/**/*.js",
         "${workspaceFolder}/.vscode/**/*.js"
       ],
-      "preLaunchTask": "npm: dev"
+      "preLaunchTask": "dev:all"
     }
   ]
 }

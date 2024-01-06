@@ -55,11 +55,6 @@
           "default": true,
           "description": "Specify whether the keywords are case sensitive or not"
         },
-        "veco.highlight.enableDiagnostics": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable creating entries in the problems view."
-        },
         "veco.highlight.maxFilesForSearch": {
           "type": "number",
           "default": 5120,
@@ -118,18 +113,6 @@
                     "type": "string",
                     "description": "Custom text to be highlighted."
                   },
-                  "diagnosticSeverity": {
-                    "type": "string",
-                    "default": "none",
-                    "enum": [
-                      "error",
-                      "warning",
-                      "information",
-                      "hint",
-                      "none"
-                    ],
-                    "description": "If set to 'none', it will do nothing. Otherwise it will set the diagnostic severity in the problems view."
-                  },
                   "regex": {
                     "type": "object",
                     "properties": {
@@ -172,21 +155,18 @@
           "default": [
             {
               "text": "NOTE:",
-              "diagnosticSeverity": "information",
               "color": "#fff",
               "backgroundColor": "rgba(27,154,170,1)",
               "overviewRulerColor": "rgba(27,154,170,0.8)"
             },
             {
               "text": "TODO:",
-              "diagnosticSeverity": "warning",
               "color": "#fff",
               "backgroundColor": "rgba(255,197,61,1)",
               "overviewRulerColor": "rgba(255,197,61,0.8)"
             },
             {
               "text": "FIXME:",
-              "diagnosticSeverity": "error",
               "color": "#fff",
               "backgroundColor": "rgba(239,71,110,1)",
               "overviewRulerColor": "rgba(239,71,110,0.8)"
@@ -380,22 +360,22 @@
         "command": "veco.highlight.toggleEnabled"
       },
       {
-        "title": "List highlighted annotations",
+        "title": "List annotations",
         "category": "Veco - Highlight",
         "command": "veco.highlight.listAnnotations"
       },
       {
-        "title": "Show highlight output channel",
+        "title": "Show output channel",
         "category": "Veco - Highlight",
-        "command": "veco.highlight.showOutputChannel"
+        "command": "veco.highlight.showLogOutputChannel"
       },
       {
-        "title": "Apply file nesting config",
+        "title": "Apply config",
         "category": "Veco - File Nesting",
         "command": "veco.fileNesting.apply"
       },
       {
-        "title": "Remove file nesting config",
+        "title": "Remove config",
         "category": "Veco - File Nesting",
         "command": "veco.fileNesting.remove"
       },
@@ -405,66 +385,66 @@
         "command": "veco.colorize.toggleEnabled"
       },
       {
-        "title": "Insert log message",
+        "title": "Insert message",
         "category": "Veco - Logger",
         "command": "veco.logger.insert"
       },
       {
-        "title": "Comment out all log messages",
+        "title": "Comment out all messages",
         "category": "Veco - Logger",
         "command": "veco.logger.comment"
       },
       {
-        "title": "Uncomment all commented log messages",
+        "title": "Uncomment all commented messages",
         "category": "Veco - Logger",
         "command": "veco.logger.uncomment"
       },
       {
-        "title": "Delete all log messages",
+        "title": "Delete all messages",
         "category": "Veco - Logger",
         "command": "veco.logger.delete"
       },
       {
-        "title": "Insert region marker comment",
+        "title": "Insert marker comment",
         "category": "Veco - Region",
         "command": "veco.region.mark"
       },
       {
-        "title": "Delete all region markers in the current document",
+        "title": "Delete all markers in the current document",
         "category": "Veco - Region",
         "command": "veco.region.delete"
       },
       {
-        "title": "Delete all region markers across workspace",
+        "title": "Delete all markers across workspace",
         "category": "Veco - Region",
         "command": "veco.region.deleteAll"
       },
       {
-        "title": "Refresh Dependencies List",
+        "title": "Refresh dependencies list",
         "category": "Veco - Packager",
         "command": "veco.packager.refreshEntry",
         "icon": "$(refresh)"
       },
       {
-        "title": "Link Dependency to NPM Website",
+        "title": "Link dependency to NPM website",
         "category": "Veco - Packager",
         "command": "veco.packager.link",
         "icon": "$(link-external)"
       },
       {
-        "title": "Remove Dependency",
+        "title": "Remove dependency",
         "category": "Veco - Packager",
         "command": "veco.packager.remove",
         "icon": "$(trash)"
       },
       {
-        "title": "Update Dependency",
+        "title": "Update dependency",
         "category": "Veco - Packager",
         "command": "veco.packager.updateSingle",
         "icon": "$(chevron-up)"
       },
       {
-        "title": "Update All Dependencies",
+        "title": "Update all dependencies",
         "category": "Veco - Packager",
         "command": "veco.packager.updateAll",
         "icon": "$(fold-up)"
@@ -532,8 +512,14 @@
     "views": {
       "veco_packager": [
         {
-          "id": "veco_packager.treeDataProvider",
-          "name": "Dependencies"
+          "type": "webview",
+          "id": "veco_packager.installDeps",
+          "name": "Install Dependencies"
+        },
+        {
+          "type": "tree",
+          "id": "veco_packager.listDeps",
+          "name": "Node Dependencies"
         }
       ]
     },
@@ -541,12 +527,12 @@
       "view/title": [
         {
           "command": "veco.packager.updateAll",
-          "when": "view == veco_packager.treeDataProvider",
+          "when": "view == veco_packager.listDeps",
           "group": "navigation"
         },
         {
           "command": "veco.packager.refreshEntry",
-          "when": "view == veco_packager.treeDataProvider",
+          "when": "view == veco_packager.listDeps",
           "group": "navigation"
         }
       ],
@@ -570,12 +556,16 @@
     }
   },
   "scripts": {
+    "install:all": "ni && cd webview-ui && ni",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest",
     "dev": "nr build --watch",
+    "dev:webview": "cd webview-ui && nr dev",
+    "dev:all": "run-p dev:webview dev",
     "build": "tsup",
+    "build:webview": "cd webview-ui && nr build",
     "vscode:package": "vsce package --no-dependencies",
     "vscode:prepublish": "nr build",
     "vscode:publish": "vsce publish --no-dependencies",
@@ -598,6 +588,7 @@
     "ky": "^1.1.3",
     "lint-staged": "^15.1.0",
     "minimatch": "^9.0.3",
+    "npm-run-all2": "^6.1.1",
     "pnpm": "^8.11.0",
     "prettier": "^3.1.0",
     "rimraf": "^5.0.5",
