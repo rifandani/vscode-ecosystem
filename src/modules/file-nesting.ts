@@ -2,7 +2,7 @@ import vscode from 'vscode'
 import { configs, fileNestingDefaultConfig } from '../constants/config'
 import { getFileNestingConfig } from '../utils/config'
 
-export class FileNesting {
+class FileNesting {
   /**
    * apply file nesting config in global/workspace settings
    *
@@ -63,3 +63,6 @@ export class FileNesting {
     await this.removeSettings(false)
   }
 }
+
+// exports class singleton to prevent multiple invocations
+export const fileNesting = new FileNesting()

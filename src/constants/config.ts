@@ -6,10 +6,6 @@ export type CustomDiagnosticSeverity = 'error' | 'warning' | 'information' | 'hi
 export interface KeywordObject extends Partial<vscode.DecorationRenderOptions> {
   text: string
   regex?: { pattern: string | RegExp }
-  /**
-   * @default 'none'
-   */
-  diagnosticSeverity?: CustomDiagnosticSeverity
 }
 export type Keyword = string | KeywordObject
 
@@ -17,7 +13,6 @@ export interface HighlightDefaultConfig {
   enabled: boolean
   toggleURI: boolean
   isCaseSensitive: boolean
-  enableDiagnostics: boolean
   maxFilesForSearch: number
   defaultStyle: Partial<vscode.DecorationRenderOptions>
   keywords: Array<Keyword>
@@ -74,7 +69,6 @@ export const configs = {
     enabled: 'enabled',
     toggleURI: 'toggleURI',
     isCaseSensitive: 'isCaseSensitive',
-    enableDiagnostics: 'enableDiagnostics',
     maxFilesForSearch: 'maxFilesForSearch',
     defaultStyle: 'defaultStyle',
     keywords: 'keywords',
@@ -115,7 +109,10 @@ export const viewsContainer = {
 } as const
 
 export const views = {
-  veco_packager: 'veco_packager.treeDataProvider',
+  packager: {
+    listDeps: 'veco_packager.listDeps', // tree
+    installDeps: 'veco_packager.installDeps', // webview
+  },
 } as const
 
 export const highlightDefaultConfig = {
@@ -133,10 +130,6 @@ export const highlightDefaultConfig = {
    */
   isCaseSensitive: true,
   /**
-   * Enable creating diagnostic entries for open files in the problems view.
-   */
-  enableDiagnostics: false,
-  /**
    * Max files for searching, mostly you don't need to configure this
    */
   maxFilesForSearch: 5120,
@@ -148,21 +141,18 @@ export const highlightDefaultConfig = {
   keywords: [
     {
       text: 'NOTE:',
-      diagnosticSeverity: 'information',
       color: '#fff',
       backgroundColor: 'rgba(27,154,170,1)',
       overviewRulerColor: 'rgba(27,154,170,0.8)',
     },
     {
       text: 'TODO:',
-      diagnosticSeverity: 'warning',
       color: '#fff',
       backgroundColor: 'rgba(255,197,61,1)',
       overviewRulerColor: 'rgba(255,197,61,0.8)',
     },
     {
       text: 'FIXME:',
-      diagnosticSeverity: 'error',
       color: '#fff',
       backgroundColor: 'rgba(239,71,110,1)',
       overviewRulerColor: 'rgba(239,71,110,0.8)',

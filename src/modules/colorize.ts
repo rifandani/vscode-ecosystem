@@ -10,7 +10,7 @@ export interface ColorizeState {
   decorationTypes: vscode.TextEditorDecorationType[]
 }
 
-export class Colorize {
+class Colorize {
   private _timeout: ColorizeState['timeout'] = null
   private _decorationTypes: ColorizeState['decorationTypes'] = []
 
@@ -209,3 +209,6 @@ export class Colorize {
     this.triggerUpdateColorize()
   }
 }
+
+// exports class singleton to prevent multiple invocations
+export const colorize = new Colorize()

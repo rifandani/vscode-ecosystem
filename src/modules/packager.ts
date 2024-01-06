@@ -3,11 +3,11 @@ import { Buffer } from 'node:buffer'
 import vscode from 'vscode'
 import type { PackageJson } from 'type-fest'
 import semver from 'semver'
-import { configs } from '../constants/config'
-import { detectPackageManager, executeTerminalCommand } from '../utils/helper'
+import { configs, views } from '../constants/config'
+import { checkFileExists, detectPackageManager, executeTerminalCommand, getNonce, getUriContent, getWebviewUri } from '../utils/helper'
 import { getPackagerConfig } from '../utils/config'
-import { jsdelivrApi } from '../utils/http'
-import type { ContextValue, JsdelivrResolvedDep, UpdateableDepType } from '../constants/packager'
+import { jsdelivrApi, npmRegistryApi } from '../utils/http'
+import type { ContextValue, IncomingMessage, JsdelivrResolvedDep, Registry, UpdateableDepType } from '../constants/packager'
 import { updateableContextValues } from '../constants/packager'
 
 export class Packager {
@@ -67,7 +67,7 @@ export class DependencyTreeItem extends vscode.TreeItem {
 export class NodeDependenciesProvider implements vscode.TreeDataProvider<DependencyTreeItem> {
   private _onDidChangeTreeData = new vscode.EventEmitter<DependencyTreeItem | undefined | null | void>()
   readonly onDidChangeTreeData = this._onDidChangeTreeData.event
-  private workspaceRoot = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
+  private _workspaceRoot = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0
     ? vscode.workspace.workspaceFolders[0].uri
     : undefined
 
@@ -76,27 +76,27 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   }
 
   async getChildren(element?: DependencyTreeItem) {
-    if (!this.workspaceRoot) {
+    if (!this._workspaceRoot) {
       vscode.window.showInformationMessage('No dependency in empty workspace')
       return Promise.resolve([])
     }
 
     // this is when we are clicking on the dep item
     if (element)
-      return Promise.resolve(await this.getNestedView(element))
+      return Promise.resolve(await this._getNestedView(element))
 
     // this is when we are on the root view
-    return Promise.resolve(await this.getRootView())
+    return Promise.resolve(await this._getRootView())
   }
 
   /**
    * should be called when there are no `element` or we are on the root view
    * we do need to check outdated deps here
    */
-  private async getRootView() {
+  private async _getRootView() {
     // get the root workspace package.json
-    const packageJsonUri = vscode.Uri.joinPath(this.workspaceRoot!, 'package.json')
-    const packageJsonStat = await this.checkFileExists(packageJsonUri)
+    const packageJsonUri = vscode.Uri.joinPath(this._workspaceRoot!, 'package.json')
+    const packageJsonStat = await checkFileExists(packageJsonUri)
 
     if (!packageJsonStat) {
       vscode.window.showInformationMessage('There is no "package.json" file in the workspace')
@@ -104,9 +104,9 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     }
 
     // get original deps versions, updated deps versions, and root module deps
-    const packageJsonContent = await this.getPackageJsonContent(packageJsonUri)
-    const updatedDeps = await this.getUpdatedDeps(packageJsonContent)
-    const deps = await this.getModuleDependencyTreesBasedOnConfig(packageJsonContent, updatedDeps) // pass in `updatedDeps`
+    const packageJsonContent = await getUriContent<PackageJson>(packageJsonUri)
+    const updatedDeps = await this._getUpdatedDeps(packageJsonContent)
+    const deps = await this._getModuleDependencyTreesBasedOnConfig(packageJsonContent, updatedDeps) // pass in `updatedDeps`
 
     return deps
   }
@@ -115,11 +115,11 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
    * should be called when there are `element` or we are clicking on the dep item
    * we do NOT need to check outdated deps here
    */
-  private async getNestedView(element: DependencyTreeItem) {
+  private async _getNestedView(element: DependencyTreeItem) {
     // get package.json paths, content, and finally nested module deps
-    const nodeModulePackageJsonPath = vscode.Uri.joinPath(this.workspaceRoot!, 'node_modules', element.label as string, 'package.json')
-    const packageJsonContent = await this.getPackageJsonContent(nodeModulePackageJsonPath)
-    const deps = await this.getModuleDependencyTreesBasedOnConfig(packageJsonContent) // without passing `updatedDeps`
+    const nodeModulePackageJsonPath = vscode.Uri.joinPath(this._workspaceRoot!, 'node_modules', element.label as string, 'package.json')
+    const packageJsonContent = await getUriContent<PackageJson>(nodeModulePackageJsonPath)
+    const deps = await this._getModuleDependencyTreesBasedOnConfig(packageJsonContent) // without passing `updatedDeps`
 
     return deps
   }
@@ -127,7 +127,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   /**
    * given the `packageJsonContent`, get all updateable dependencies while also respecting the user config
    */
-  private async getUpdatedDeps(packageJsonContent: PackageJson) {
+  private async _getUpdatedDeps(packageJsonContent: PackageJson) {
     const { moduleTypes, versionTarget } = getPackagerConfig()
     let affectedDeps: PackageJson['dependencies'] = {}
     const updatedDeps: PackageJson['dependencies'] = {}
@@ -166,7 +166,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
 
       const resolvedDep = await manifest.value.json<JsdelivrResolvedDep>() // version without tilde / caret
       const usedDepVersion = affectedDeps[resolvedDep.name]! // version with tilde / caret
-      const prefix = this.getVersionPrefix(usedDepVersion) // like ^, ~, >, >=, etc...
+      const prefix = this._getVersionPrefix(usedDepVersion) // like ^, ~, >, >=, etc...
       const parseableVer = usedDepVersion.replace(prefix, '') // version without prefix
       const parsed = semver.parse(parseableVer)
 
@@ -186,7 +186,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
    *
    * if `updatedDeps` defined, then it will be root dependencies, otherwise it's nested dependencies
    */
-  private async getModuleDependencyTreesBasedOnConfig(packageJsonContent: PackageJson, updatedDeps?: PackageJson['dependencies']) {
+  private async _getModuleDependencyTreesBasedOnConfig(packageJsonContent: PackageJson, updatedDeps?: PackageJson['dependencies']) {
     const { moduleTypes } = getPackagerConfig()
     const depTrees: DependencyTreeItem[] = []
 
@@ -194,7 +194,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     for (const type of moduleTypes) {
       const deps = packageJsonContent[type]
       const contextValue = updatedDeps ? type : `nested${type.at(0)!.toUpperCase()}${type.slice(1)}` as ContextValue
-      const _depTrees = await this.getModuleDependencyTrees({
+      const _depTrees = await this._getModuleDependencyTrees({
         deps,
         contextValue,
         updatedDeps, // pass in `updatedDeps` to get informed about the outdated deps
@@ -209,14 +209,14 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   /**
    * given the `dependencies` object from `package.json`, then convert it into `DependencyTreeItem`
    */
-  private async getModuleDependencyTrees({ contextValue, deps = {}, updatedDeps = {} }: { contextValue: ContextValue, deps: PackageJson['dependencies'], updatedDeps?: PackageJson['dependencies'] }) {
+  private async _getModuleDependencyTrees({ contextValue, deps = {}, updatedDeps = {} }: { contextValue: ContextValue, deps: PackageJson['dependencies'], updatedDeps?: PackageJson['dependencies'] }) {
     const depTrees = []
 
     // for each installed module
     for (const moduleName of Object.keys(deps)) {
       const version = deps[moduleName] as string
-      const modulePath = vscode.Uri.joinPath(this.workspaceRoot!, 'node_modules', moduleName)
-      const moduleExists = await this.checkFileExists(modulePath)
+      const modulePath = vscode.Uri.joinPath(this._workspaceRoot!, 'node_modules', moduleName)
+      const moduleExists = await checkFileExists(modulePath)
       let description
         = contextValue === 'devDependencies' || contextValue === 'nestedDevDependencies'
           ? `(dev) ${version}`
@@ -258,7 +258,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
   /**
    * given the `version`, get the prefix like caret (^), tilde (~), ranges (<, <=, >, >=, =)
    */
-  private getVersionPrefix(version: string) {
+  private _getVersionPrefix(version: string) {
     let prefix = ''
 
     for (let index = 0; index < version.length; index++) {
@@ -273,28 +273,6 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     }
 
     return prefix
-  }
-
-  /**
-   * given the `packageJsonUri`, read the file content and parse it
-   */
-  private async getPackageJsonContent(packageJsonUri: vscode.Uri) {
-    const content = await vscode.workspace.fs.readFile(packageJsonUri)
-
-    return JSON.parse(content.toString()) as PackageJson
-  }
-
-  /**
-   * given the `uri`, read the file stat, if it returns `undefined` that means the file doesn't exists
-   */
-  private async checkFileExists(uri: vscode.Uri) {
-    try {
-      const stat = await vscode.workspace.fs.stat(uri)
-      return stat
-    }
-    catch (err) {
-      return undefined
-    }
   }
 
   /**
@@ -374,8 +352,8 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
       progress.report({ increment: 10, message: `Starting updates...` })
 
       const { moduleTypes } = getPackagerConfig()
-      const packageJsonUri = vscode.Uri.joinPath(this.workspaceRoot!, 'package.json')
-      const packageJsonContent = await this.getPackageJsonContent(packageJsonUri)
+      const packageJsonUri = vscode.Uri.joinPath(this._workspaceRoot!, 'package.json')
+      const packageJsonContent = await getUriContent<PackageJson>(packageJsonUri)
 
       // for each `updateableRootDeps`, we update the `packageJsonContent`
       for (const dep of updateableRootDeps) {
@@ -414,8 +392,8 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
       return
 
     const { moduleTypes } = getPackagerConfig()
-    const packageJsonUri = vscode.Uri.joinPath(this.workspaceRoot!, 'package.json')
-    const packageJsonContent = await this.getPackageJsonContent(packageJsonUri)
+    const packageJsonUri = vscode.Uri.joinPath(this._workspaceRoot!, 'package.json')
+    const packageJsonContent = await getUriContent<PackageJson>(packageJsonUri)
     const updatedVersion = (dep.description as string).split('->').at(-1)
     const depTypeToUpdate = moduleTypes.find(type => packageJsonContent[type]?.[dep.label])
 
@@ -429,5 +407,113 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
 
     await Packager.updatePackageJsonDepsAndRunInstall(packageJsonUri, packageJsonContent)
     this.refreshCommand()
+  }
+}
+
+export class NodeDependenciesWebviewViewProvider implements vscode.WebviewViewProvider {
+  public static readonly viewType = views.packager.installDeps
+  private _webviewView?: vscode.WebviewView
+
+  constructor(private readonly _extensionUri: vscode.Uri) {}
+
+  /**
+   * Defines and returns the HTML that should be rendered within the webview panel.
+   *
+   * @remarks This is also the place where references to the Vue webview build files
+   * are created and inserted into the webview HTML.
+   *
+   * @param webview A reference to the extension webview
+   * @param extensionUri The URI of the directory containing the extension
+   * @returns A template string literal containing the HTML that should be rendered within the webview panel
+   */
+  private _getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri) {
+    // The assets from the Vue build output
+    const stylesUri = getWebviewUri(webview, extensionUri, ['webview-ui', 'build', 'assets', 'index.css'])
+    const scriptUri = getWebviewUri(webview, extensionUri, ['webview-ui', 'build', 'assets', 'index.js'])
+    const nonce = getNonce()
+
+    // Tip: Install the es6-string-html VS Code extension to enable code highlighting below
+    return /* html */ `
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+          <link rel="stylesheet" type="text/css" href="${stylesUri}">
+          <title>Packager: Install Node Dependencies</title>
+        </head>
+        <body>
+          <div id="app"></div>
+          <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
+        </body>
+      </html>
+    `
+  }
+
+  public async resolveWebviewView(
+    webviewView: vscode.WebviewView,
+    _context: vscode.WebviewViewResolveContext,
+    _token: vscode.CancellationToken,
+  ) {
+    this._webviewView = webviewView
+
+    webviewView.webview.options = {
+      // Allow scripts in the webview
+      enableScripts: true,
+      // localResourceRoots: [this._extensionUri],
+      // Restrict the webview to only load resources from the `dist` and `webview-ui/build` directories
+      localResourceRoots: [vscode.Uri.joinPath(this._extensionUri, 'dist'), vscode.Uri.joinPath(this._extensionUri, 'webview-ui/build')],
+    }
+
+    webviewView.webview.html = this._getWebviewHtml(webviewView.webview, this._extensionUri)
+
+    webviewView.webview.onDidReceiveMessage(
+      async (message: IncomingMessage) => {
+        switch (message.type) {
+          case 'search': {
+            if (!message.search) {
+              await webviewView.webview.postMessage({
+                type: 'ext.suggestions',
+                suggestions: [],
+              })
+              break
+            }
+
+            const response = await npmRegistryApi.get(`search?size=50&text=${message.search}`)
+            const registry = await response.json<Registry>()
+
+            await webviewView.webview.postMessage({
+              type: 'ext.suggestions',
+              suggestions: registry.objects,
+            })
+            break
+          }
+
+          case 'link': {
+            const parsedUrl = vscode.Uri.parse(message.link)
+            await vscode.env.openExternal(parsedUrl)
+            break
+          }
+
+          case 'install-prod': {
+            // detect user package manager
+            const packageManager = await detectPackageManager()
+            const cmd = `${packageManager} add ${message.packageName}@latest`
+            // run install
+            executeTerminalCommand(cmd)
+            break
+          }
+          case 'install-dev': {
+            // detect user package manager
+            const packageManager = await detectPackageManager()
+            const cmd = `${packageManager} add -D ${message.packageName}@latest`
+            // run install
+            executeTerminalCommand(cmd)
+            break
+          }
+        }
+      },
+    )
   }
 }

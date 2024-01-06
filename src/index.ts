@@ -1,33 +1,29 @@
 import vscode from 'vscode'
-import { Colorize } from './modules/colorize'
+import { colorize } from './modules/colorize'
 import { commandIds as colorizeCommandIds } from './constants/colorize'
-import { Highlight } from './modules/highlight'
+import { highlight } from './modules/highlight'
 import { commandIds as highlightCommandIds } from './constants/highlight'
-import { FileNesting } from './modules/file-nesting'
+import { fileNesting } from './modules/file-nesting'
 import { commandIds as fileNestingCommandIds } from './constants/file-nesting'
 import { Logger } from './modules/logger'
 import { commandIds as loggerCommandIds } from './constants/logger'
-import { Region } from './modules/region'
+import { region } from './modules/region'
 import { commandIds as regionCommandIds } from './constants/region'
 import { views } from './constants/config'
 import { commandIds as commonCommandIds } from './constants/common'
 import { executeInitPackageJson } from './utils/helper'
 import { commandIds as packagerCommandIds } from './constants/packager'
 import type { DependencyTreeItem } from './modules/packager'
-import { NodeDependenciesProvider, Packager } from './modules/packager'
+import { NodeDependenciesProvider, NodeDependenciesWebviewViewProvider, Packager } from './modules/packager'
 import { commandIds as delinerCommandIds } from './constants/deliner'
 import { Deliner } from './modules/deliner'
 
 export async function activate(context: vscode.ExtensionContext) {
-  const highlight = new Highlight()
-  const fileNesting = new FileNesting()
-  const colorize = new Colorize()
-  const region = new Region()
-
   // init "highlight" internal states
   highlight.init()
   // init "packager" providers
   const nodeDependenciesProvider = new NodeDependenciesProvider()
+  const nodeDependenciesWebviewViewProvider = new NodeDependenciesWebviewViewProvider(context.extensionUri)
 
   // trigger update "highlight" and "colorize" for the first time
   if (vscode.window.activeTextEditor) {
@@ -36,7 +32,6 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 
   const highlightDisposables = [
-    highlight.diagnostic,
     vscode.commands.registerCommand(
       highlightCommandIds.toggleEnabled,
       () => highlight.toggleEnabledCommand(),
@@ -46,8 +41,8 @@ export async function activate(context: vscode.ExtensionContext) {
       () => highlight.listAnnotationsCommand(),
     ),
     vscode.commands.registerCommand(
-      highlightCommandIds.showOutputChannel,
-      () => highlight.showOutputChannelCommand(),
+      highlightCommandIds.showLogOutputChannel,
+      () => highlight.showLogOutputChannelCommand(),
     ),
   ]
 
@@ -105,8 +100,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const packagerDisposables = [
     vscode.window.registerTreeDataProvider(
-      views.veco_packager,
+      views.packager.listDeps,
       nodeDependenciesProvider,
+    ),
+    vscode.window.registerWebviewViewProvider(
+      views.packager.installDeps,
+      nodeDependenciesWebviewViewProvider,
     ),
     vscode.commands.registerCommand(
       packagerCommandIds.refreshEntry,
@@ -161,10 +160,6 @@ export async function activate(context: vscode.ExtensionContext) {
       colorize.triggerUpdateColorize()
     }),
 
-    vscode.workspace.onDidCloseTextDocument((event) => {
-      highlight.resetDiagnostic(event.uri)
-    }),
-
     vscode.workspace.onDidChangeConfiguration((event) => {
       highlight.handleChangeConfiguration(event)
       colorize.handleChangeConfiguration(event)
@@ -183,4 +178,8 @@ export async function activate(context: vscode.ExtensionContext) {
     ...commonDisposables,
     ...listenerDisposables,
   )
+}
+
+export function deactivate() {
+  highlight.dispose()
 }

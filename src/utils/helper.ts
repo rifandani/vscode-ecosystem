@@ -36,6 +36,19 @@ export async function diagnosticSeverityMapper(severity: CustomDiagnosticSeverit
 }
 
 /**
+ * given the `Uri`, read the file stat, if it returns `undefined` that means the file doesn't exists
+ */
+export async function checkFileExists(uri: vscode.Uri) {
+  try {
+    const stat = await vscode.workspace.fs.stat(uri)
+    return stat
+  }
+  catch (err) {
+    return null
+  }
+}
+
+/**
  * retrieve metadata about a file in the user workspace folder
  */
 export async function getFileStat(fileName: string) {
@@ -49,10 +62,7 @@ export async function getFileStat(fileName: string) {
   const filePathUri = vscode.Uri.joinPath(workspaceFolders[0].uri, fileName)
 
   // get the file stat metadata
-  const [fileStat, err] = await to(vscode.workspace.fs.stat(filePathUri))
-
-  if (err)
-    return null
+  const fileStat = await checkFileExists(filePathUri)
 
   return fileStat
 }
@@ -106,6 +116,13 @@ export function getPaths(patterns: Array<string>) {
 }
 
 /**
+ * get the substring at the specified location
+ */
+export function getContent(lineText: string, match: RegExpExecArray | RegExpMatchArray) {
+  return lineText.substring(lineText.indexOf(match[0]), lineText.length)
+};
+
+/**
  * checks if the filename matches with the `include` / `exclude` config using `minimatch`
  */
 export function isFileNameOk({ filename, include, exclude }: { include: string[], exclude: string[], filename: string }) {
@@ -131,9 +148,8 @@ export function escapeRegExpGroups(str: string) {
     // make group non-capturing
     return str.replace(grpPattern, '$1?:$2$3')
   }
-  else {
-    return escapeRegExpGroupsLegacy(str)
-  }
+
+  return escapeRegExpGroupsLegacy(str)
 }
 
 /**
@@ -167,24 +183,63 @@ export function executeTerminalCommand(cmd: string, options: { createNew: boolea
 }
 
 /**
- * create a status bar item with left alignment
- */
-export function createStatusBarItem(options?: Partial<Pick<vscode.StatusBarItem, 'name' | 'text' | 'tooltip' | 'color' | 'backgroundColor' | 'command' | 'accessibilityInformation'>>) {
-  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)
-
-  if (options) {
-    for (const [key, value] of Object.entries(options))
-      // @ts-expect-error dynamically assign value to the object
-      statusBarItem[key] = value
-  }
-
-  return statusBarItem
-};
-
-/**
  * initialize `package.json` file in the root directory
  */
 export function executeInitPackageJson() {
   const cmd = 'npm init --yes'
   executeTerminalCommand(cmd)
+}
+
+/**
+ * given the `Uri`, read the file content and parse it
+ */
+export async function getUriContent<T>(packageJsonUri: vscode.Uri) {
+  const content = await vscode.workspace.fs.readFile(packageJsonUri)
+
+  return JSON.parse(content.toString()) as T
+}
+
+/**
+ * A helper function that returns a unique alphanumeric identifier called a nonce.
+ *
+ * @remarks This function is primarily used to help enforce content security
+ * policies for resources/scripts being executed in a webview context.
+ *
+ * @returns A nonce
+ */
+export function getNonce() {
+  let text = ''
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+
+  for (let i = 0; i < 32; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length))
+
+  return text
+}
+
+/**
+ * A helper function which will get the webview URI of a given file or resource.
+ *
+ * @remarks This URI can be used within a webview's HTML as a link to the
+ * given file/resource.
+ *
+ * @param webview A reference to the extension webview
+ * @param extensionUri The URI of the directory containing the extension
+ * @param pathList An array of strings representing the path to a file/resource
+ * @returns A URI pointing to the file/resource
+ */
+export function getWebviewUri(webview: vscode.Webview, extensionUri: vscode.Uri, pathList: string[]) {
+  return webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, ...pathList))
+}
+
+/**
+ * read a file from uri and decode the Uint8Array to string
+ */
+export async function readFileFromUri(uri: vscode.Uri) {
+  // Use vscode.workspace.fs.readFile to read the contents of the file
+  const content = await vscode.workspace.fs.readFile(uri)
+  // Convert the content to a string
+  const contentString = new TextDecoder().decode(content)
+
+  return contentString
 }
