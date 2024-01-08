@@ -357,7 +357,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
 
       // for each `updateableRootDeps`, we update the `packageJsonContent`
       for (const dep of updateableRootDeps) {
-        const updatedVersion = (dep.description as string).split('->').at(-1)
+        const updatedVersion = (dep.description as string).split('->').at(-1)!.trim()
         const depTypeToUpdate = moduleTypes.find(type => packageJsonContent[type]?.[dep.label])
 
         if (!depTypeToUpdate) {
@@ -394,7 +394,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     const { moduleTypes } = getPackagerConfig()
     const packageJsonUri = vscode.Uri.joinPath(this._workspaceRoot!, 'package.json')
     const packageJsonContent = await getUriContent<PackageJson>(packageJsonUri)
-    const updatedVersion = (dep.description as string).split('->').at(-1)
+    const updatedVersion = (dep.description as string).split('->').at(-1)!.trim()
     const depTypeToUpdate = moduleTypes.find(type => packageJsonContent[type]?.[dep.label])
 
     if (!depTypeToUpdate) {
