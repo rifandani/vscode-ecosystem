@@ -150,7 +150,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
       const _promises = Object.entries(depObject).map(([name, version]) => {
         // `version` still includes caret (^), tilde (~), etc...
         const specifier = versionTarget === 'semver' ? version : versionTarget
-        return jsdelivrApi.get(`packages/npm/${name}/resolved/?specifier=${specifier}`)
+        return jsdelivrApi.get(`packages/npm/${name}/resolved?specifier=${specifier}`)
       })
 
       promises.push(..._promises)
@@ -165,7 +165,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
         continue
 
       const resolvedDep = await manifest.value.json<JsdelivrResolvedDep>() // version without tilde / caret
-      const usedDepVersion = affectedDeps[resolvedDep.name]! // version with tilde / caret
+      const usedDepVersion = affectedDeps[resolvedDep.name]!.trim() // version with tilde / caret
       const prefix = this._getVersionPrefix(usedDepVersion) // like ^, ~, >, >=, etc...
       const parseableVer = usedDepVersion.replace(prefix, '') // version without prefix
       const parsed = semver.parse(parseableVer)
@@ -214,7 +214,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
 
     // for each installed module
     for (const moduleName of Object.keys(deps)) {
-      const version = deps[moduleName] as string
+      const version = (deps[moduleName] as string).trim()
       const modulePath = vscode.Uri.joinPath(this._workspaceRoot!, 'node_modules', moduleName)
       const moduleExists = await checkFileExists(modulePath)
       let description
