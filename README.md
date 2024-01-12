@@ -1,12 +1,16 @@
 # Vscode Ecosystem
 
+<div style="display: flex; gap: 10px;">
 <a href="https://marketplace.visualstudio.com/items?itemName=rifandani.vscode-ecosystem" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/v/rifandani.vscode-ecosystem?color=eee&amp;label=VS%20Code%20Marketplace&logo=visual-studio-code" alt="Visual Studio Marketplace Version" /></a>
 
 ![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/rifandani.vscode-ecosystem?logo=visual-studio-marketplace)
+</div>
 
-Collection of useful vscode extensions functionality that I frequently use for frontend development in one extension
+Collection of useful vscode extensions functionality that I frequently use for frontend development  packed in one extension
 
 ## Requirements
+
+You need to have / install these tools before using the extensions, because the extensions is using it under the hood.
 
 1. Node.js v18+
 
@@ -20,37 +24,37 @@ Check for all the supported snippets [here](./src/snippets/react.json)
 
 2. ***Highlight***
 
-Highlight defined annotations (ex. `NOTE:`, `TODO:`, `FIXME:`) within your code. Supports for custom annotations and decoration styles.
+When developing an application, we often want to emphasize some code to other developers or maybe to our future self. It could be a code that need to be fixed/refactor later (tech debt), notes to others/yourself in the future. This extension could emphasize/highlight your defined annotations (e.g. `NOTE:`, `TODO:`, `FIXME:`) within your code. It supports for custom annotations and decoration styles.
 
 Check the full details in [highlight docs](./src/docs/highlight.md)
 
 3. ***File Nesting***
 
-Making your files tree cleaner in vscode. This is opinionated, but you can change the settings later on.
+Big application often has a lot of config files. These files is pretty messy, it's everywhere. This extension could make your files tree cleaner in vscode. This is opinionated, but you can change the settings later on.
 
 Check the full details in [file nesting docs](./src/docs/file-nesting.md)
 
 4. ***Colorize***
 
-Highlight web colors in your document. Support for hex, rgb, rgba, hsl, lch, display-p3, and oklab colors. Also supports named colors (e.g grey, green, red, etc...).
+When developing a frontend app, we often came into colors. When defining the colors using something like hex, it's pretty hard for us to remember the actual colors. This extension could help to visualize/highlight web colors in your editor. It supports hex, rgb, rgba, hsl, lch, display-p3, oklab, and also named colors (e.g `grey`, `green`, `red`, etc...).
 
 Check the full details in [colorize docs](./src/docs/colorize.md)
 
 5. ***Logger***
 
-Easy console logger with support to comment, uncomment, and delete all occurrences. For now only supports Javascript code.
+When developing application, we often came into bugs. When debugging, sometimes we just like the plain `console.log` instead of debugger breakpoints. This extension could easily output `console.log` your part of codes with support to comment, uncomment, and delete all of its occurrences. Note: for now only supports Javascript code.
 
 Check the full details in [logger docs](./src/docs/logger.md)
 
 6. ***Region***
 
-Automatic code region markers, and delete markers easily in your editor/workspace.
+Marking your code by region/section manually is pretty annoying, especially when the LOC is pretty long. This extension could mark your code, and delete markers easily in your editor/workspace.
 
 Check the full details in [region docs](./src/docs/region.md)
 
 7. ***Packager***
 
-View, add, update, and delete your Javascript dependencies easily.
+Maintenance of your node dependencies could never be easier. This extension could search, view, install, update, link to npm docs, and delete your node dependencies.
 
 Check the full details in [packager docs](./src/docs/packager.md)
 
@@ -64,4 +68,4 @@ Check the full details in [deliner docs](./src/docs/deliner.md)
 
 ## Issues and Roadmap
 
-Check the full details in [repo issues](https://github.com/rifandani/vscode-ecosystem/issues)
+Curious for the current bugs, and future features? Check the full details in [repo issues](https://github.com/rifandani/vscode-ecosystem/issues)
