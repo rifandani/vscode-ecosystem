@@ -550,7 +550,7 @@
         {
           "command": "veco.packager.link",
           "group": "inline",
-          "when": "view == veco_packager.treeDataProvider"
+          "when": "view == veco_packager.listDeps"
         }
       ]
     }
