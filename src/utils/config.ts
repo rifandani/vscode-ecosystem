@@ -76,11 +76,13 @@ export function getPackagerConfig() {
   const config = vscode.workspace.getConfiguration(configs.packager.root)
   const moduleTypes = config.get(configs.packager.moduleTypes) as PackagerDefaultConfig['moduleTypes']
   const versionTarget = config.get(configs.packager.versionTarget) as PackagerDefaultConfig['versionTarget']
+  const exclude = config.get(configs.packager.exclude) as string[]
 
   return {
     config,
     moduleTypes,
     versionTarget,
+    exclude,
   }
 }
 

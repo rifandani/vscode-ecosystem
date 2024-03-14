@@ -28,6 +28,7 @@ export interface PackagerDefaultConfig {
   versionTarget:
     | 'semver'
     | 'latest'
+  exclude: string[]
 }
 
 export const packagerDefaultConfig = {

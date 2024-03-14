@@ -44,6 +44,7 @@ export interface ColorizeDefaultConfig {
 export interface PackagerDefaultConfig {
   moduleTypes: ('dependencies' | 'devDependencies' | 'optionalDependencies' | 'peerDependencies')[]
   versionTarget: 'semver' | 'latest'
+  exclude: string[]
 }
 
 export interface DelinerDefaultConfig {
@@ -94,6 +95,7 @@ export const configs = {
     root: 'veco.packager',
     moduleTypes: 'moduleTypes',
     versionTarget: 'versionTarget',
+    exclude: 'exclude',
   },
   deliner: {
     root: 'veco.deliner',
@@ -388,6 +390,10 @@ export const packagerDefaultConfig = {
    * - "latest": Upgrade to whatever the package's "latest" git tag points to. Excludes prereleases.
    */
   versionTarget: 'semver',
+  /**
+   * Exact string that defines the dependency that you want to exclude
+   */
+  exclude: [],
 } satisfies PackagerDefaultConfig
 
 export const delinerDefaultConfig = {
