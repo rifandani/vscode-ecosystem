@@ -3,6 +3,7 @@ import { Buffer } from 'node:buffer'
 import vscode from 'vscode'
 import type { PackageJson } from 'type-fest'
 import semver from 'semver'
+import { omit } from '@rifandani/nxact-yutiriti'
 import { configs, views } from '../constants/config'
 import { checkFileExists, detectPackageManager, executeTerminalCommand, getNonce, getUriContent, getWebviewUri } from '../utils/helper'
 import { getPackagerConfig } from '../utils/config'
@@ -128,7 +129,7 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
    * given the `packageJsonContent`, get all updateable dependencies while also respecting the user config
    */
   private async _getUpdatedDeps(packageJsonContent: PackageJson) {
-    const { moduleTypes, versionTarget } = getPackagerConfig()
+    const { moduleTypes, versionTarget, exclude } = getPackagerConfig()
     let affectedDeps: PackageJson['dependencies'] = {}
     const updatedDeps: PackageJson['dependencies'] = {}
     const promises = []
@@ -141,13 +142,17 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
       if (!depObject)
         continue
 
+      // exclude depObject key that included in `exclude` array config
+      const excludeMatches = exclude.filter(exc => depObject[exc])
+      const filteredDepObject = excludeMatches.length ? omit(depObject, excludeMatches) : depObject
+
       // update `affectedDeps`
       affectedDeps = {
         ...affectedDeps,
-        ...depObject,
+        ...filteredDepObject,
       }
 
-      const _promises = Object.entries(depObject).map(([name, version]) => {
+      const _promises = Object.entries(filteredDepObject).map(([name, version]) => {
         // `version` still includes caret (^), tilde (~), etc...
         const specifier = versionTarget === 'semver' ? version : versionTarget
         return jsdelivrApi.get(`packages/npm/${name}/resolved?specifier=${specifier}`)
@@ -187,15 +192,18 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
    * if `updatedDeps` defined, then it will be root dependencies, otherwise it's nested dependencies
    */
   private async _getModuleDependencyTreesBasedOnConfig(packageJsonContent: PackageJson, updatedDeps?: PackageJson['dependencies']) {
-    const { moduleTypes } = getPackagerConfig()
+    const { moduleTypes, exclude } = getPackagerConfig()
     const depTrees: DependencyTreeItem[] = []
 
     // for every "prod" / "dev" / "peer" / "optional" dependencies
     for (const type of moduleTypes) {
-      const deps = packageJsonContent[type]
+      // exclude depObject key that included in `exclude` array config
+      const depObject = packageJsonContent[type] ?? {}
+      const excludeMatches = exclude.filter(exc => depObject[exc])
+      const filteredDepObject = excludeMatches.length ? omit(depObject, excludeMatches) : depObject
       const contextValue = updatedDeps ? type : `nested${type.at(0)!.toUpperCase()}${type.slice(1)}` as ContextValue
       const _depTrees = await this._getModuleDependencyTrees({
-        deps,
+        deps: filteredDepObject,
         contextValue,
         updatedDeps, // pass in `updatedDeps` to get informed about the outdated deps
       })

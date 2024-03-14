@@ -1,12 +1,22 @@
 # Vscode Ecosystem
 
-<div style="display: flex; gap: 10px;">
-<a href="https://marketplace.visualstudio.com/items?itemName=rifandani.vscode-ecosystem" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/v/rifandani.vscode-ecosystem?color=eee&amp;label=VS%20Code%20Marketplace&logo=visual-studio-code" alt="Visual Studio Marketplace Version" /></a>
+<div style="display: flex; gap: 1rem;">
 
-![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/rifandani.vscode-ecosystem?logo=visual-studio-marketplace)
+[![CI](https://github.com/rifandani/vscode-ecosystem/actions/workflows/ci.yml/badge.svg)](https://github.com/rifandani/vscode-ecosystem/actions/workflows/ci.yml)
+
+[![Release](https://github.com/rifandani/vscode-ecosystem/actions/workflows/release.yml/badge.svg)](https://github.com/rifandani/vscode-ecosystem/actions/workflows/release.yml)
+
 </div>
 
-Collection of useful vscode extensions functionality that I frequently use for frontend development  packed in one extension
+<div style="display: flex; gap: 1rem;">
+
+![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/rifandani.vscode-ecosystem?logo=visual-studio-marketplace)
+
+<a href="https://marketplace.visualstudio.com/items?itemName=rifandani.vscode-ecosystem" target="__blank"><img src="https://img.shields.io/visual-studio-marketplace/v/rifandani.vscode-ecosystem?color=eee&amp;label=VS%20Code%20Marketplace&logo=visual-studio-code" alt="Visual Studio Marketplace Version" /></a>
+
+</div>
+
+Collection of useful vscode extensions to increase productivity that I frequently use for frontend development packed in one extension
 
 ## Requirements
 
