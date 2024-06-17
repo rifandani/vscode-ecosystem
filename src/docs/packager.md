@@ -48,5 +48,13 @@ export const packagerDefaultConfig = {
    * - "latest": Upgrade to whatever the package's "latest" git tag points to. Excludes prereleases.
    */
   versionTarget: 'semver',
+  /**
+   * Glob pattern that defines the dependency that you want to exclude
+   *
+   * @example
+   *
+   * ["@types/*", "@storybook/*"]
+   */
+  exclude: [],
 } satisfies PackagerDefaultConfig
 ```

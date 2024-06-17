@@ -107,7 +107,7 @@ export function getFilename(filename: string) {
 }
 
 /**
- * get paths based on the input `include` / `exclude` pattern config
+ * get paths for `minimatch`, based on the input `include` / `exclude` pattern config
  */
 export function getPaths(patterns: Array<string>) {
   return Array.isArray(patterns)
