@@ -4,8 +4,9 @@ import vscode from 'vscode'
 import type { PackageJson } from 'type-fest'
 import semver from 'semver'
 import { omit } from '@rifandani/nxact-yutiriti'
+import { minimatch } from 'minimatch'
 import { configs, views } from '../constants/config'
-import { checkFileExists, detectPackageManager, executeTerminalCommand, getNonce, getUriContent, getWebviewUri } from '../utils/helper'
+import { checkFileExists, detectPackageManager, executeTerminalCommand, getNonce, getPaths, getUriContent, getWebviewUri } from '../utils/helper'
 import { getPackagerConfig } from '../utils/config'
 import { jsdelivrApi, npmRegistryApi } from '../utils/http'
 import type { ContextValue, IncomingMessage, JsdelivrResolvedDep, Registry, UpdateableDepType } from '../constants/packager'
@@ -143,7 +144,8 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
         continue
 
       // exclude depObject key that included in `exclude` array config
-      const excludeMatches = exclude.filter(exc => depObject[exc])
+      const paths = getPaths(exclude)
+      const excludeMatches = Object.keys(depObject).filter(pkgName => minimatch(pkgName, paths))
       const filteredDepObject = excludeMatches.length ? omit(depObject, excludeMatches) : depObject
 
       // update `affectedDeps`
@@ -199,7 +201,8 @@ export class NodeDependenciesProvider implements vscode.TreeDataProvider<Depende
     for (const type of moduleTypes) {
       // exclude depObject key that included in `exclude` array config
       const depObject = packageJsonContent[type] ?? {}
-      const excludeMatches = exclude.filter(exc => depObject[exc])
+      const paths = getPaths(exclude)
+      const excludeMatches = Object.keys(depObject).filter(pkgName => minimatch(pkgName, paths))
       const filteredDepObject = excludeMatches.length ? omit(depObject, excludeMatches) : depObject
       const contextValue = updatedDeps ? type : `nested${type.at(0)!.toUpperCase()}${type.slice(1)}` as ContextValue
       const _depTrees = await this._getModuleDependencyTrees({

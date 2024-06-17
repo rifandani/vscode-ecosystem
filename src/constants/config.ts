@@ -391,7 +391,11 @@ export const packagerDefaultConfig = {
    */
   versionTarget: 'semver',
   /**
-   * Exact string that defines the dependency that you want to exclude
+   * Glob pattern that defines the dependency that you want to exclude
+   *
+   * @example
+   *
+   * ["@types/*", "@storybook/*"]
    */
   exclude: [],
 } satisfies PackagerDefaultConfig

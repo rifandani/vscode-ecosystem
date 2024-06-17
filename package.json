@@ -329,7 +329,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Exact string that defines the dependency that you want to exclude."
+          "description": "Glob pattern that defines the dependency that you want to exclude."
         },
         "veco.deliner.include": {
           "type": "string",
